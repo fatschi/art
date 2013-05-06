@@ -1,4 +1,4 @@
-package de.uni_potsdam.de.hpi.fgnaumann.permutation;
+package de.uni_potsdam.de.hpi.fgnaumann.art.permutation;
 
 import java.util.Arrays;
 import java.util.Random;

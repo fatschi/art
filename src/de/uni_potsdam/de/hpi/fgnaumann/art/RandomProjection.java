@@ -1,4 +1,4 @@
-package de.uni_potsdam.de.hpi.fgnaumann;
+package de.uni_potsdam.de.hpi.fgnaumann.art;
 
 import java.util.Random;
 
