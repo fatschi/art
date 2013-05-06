@@ -17,8 +17,8 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 
 public class LSH {
 	
-	private static final int NUMBER_OF_RANDOM_VECTORS_d = 100;
-	private static final int NUMBER_OF_PERMUTATIONS_q = 10;
+	private static final int NUMBER_OF_RANDOM_VECTORS_d = 1000;
+	private static final int NUMBER_OF_PERMUTATIONS_q = 5;
 	private static final int WINDOW_SIZE_B = 2;
 	private static Random rnd = new Random();
 	
@@ -66,15 +66,26 @@ public class LSH {
 				candidatesHammingDistances.add(searchVectorsSignature.computeNormalizedHammingDistance(candidate));
 			}
 		}
+		
 		for(Entry<FeatureVector, List<Float>> hammingDistances : candidates.entrySet()){
-			float averageHammingDistance = 0;
 			for(Float hammingDistance: hammingDistances.getValue()){
-				averageHammingDistance+=hammingDistance;
+				if (hammingDistance <= maxDistance) {
+					System.out.println(hammingDistance + ":" + hammingDistances.getKey().getValues());
+					break;
+				}
+				// finding it once is enough is enough.
 			}
-			averageHammingDistance /= hammingDistances.getValue().size();
-			if(averageHammingDistance<=maxDistance)
-				System.out.println(hammingDistances.getKey().getValues()+ ": "+averageHammingDistance);
-		}
+		} 
+		
+//		for(Entry<FeatureVector, List<Float>> hammingDistances : candidates.entrySet()){
+//			float averageHammingDistance = 0;
+//			for(Float hammingDistance: hammingDistances.getValue()){
+//				averageHammingDistance+=hammingDistance;
+//			}
+//			averageHammingDistance /= hammingDistances.getValue().size();
+//			if(averageHammingDistance<=maxDistance)
+//				System.out.println(hammingDistances.getKey().getValues()+ ": "+averageHammingDistance);
+//		}
 		return null;
 	}
 
@@ -103,25 +114,25 @@ public class LSH {
 	
 	public static void main(String args[]){
 		Set<FeatureVector> inputVectors = new HashSet<FeatureVector>();
-		FeatureVector searchVector = new FeatureVector(1,2,3,4,5,6,7,8,9,10,11,12,13,14, 15);
+		/*FeatureVector searchVector = new FeatureVector(1,2,3,4,5,6,7,8,9,10,11,12,13,14, 15);
 		FeatureVector inputVector1 = new FeatureVector(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
 		FeatureVector inputVector2  = new FeatureVector(-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12,-13,-14,-15);
 		FeatureVector inputVector3  = new FeatureVector(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 		inputVectors.add(inputVector1);
 		inputVectors.add(inputVector2);
-		inputVectors.add(inputVector3);
+		inputVectors.add(inputVector3);*/
 		
-		/*final int randomFeatureVectorSize = 1000;
+		final int randomFeatureVectorSize = 1000;
 		
 		Integer[] zeroFeatureValues = new Integer[randomFeatureVectorSize];
 		for(int j = 0; j< randomFeatureVectorSize; j++){
-			zeroFeatureValues[j] = 0;
+			zeroFeatureValues[j] = 1;
 		}
 		FeatureVector searchVector = new FeatureVector(zeroFeatureValues);
 		
 		Integer[] closeValueFeatureValues = new Integer[randomFeatureVectorSize];
 		for(int j = 0; j< randomFeatureVectorSize; j++){
-			closeValueFeatureValues[j] = rnd.nextInt()%10;
+			closeValueFeatureValues[j] = j%5+1;
 		}
 		FeatureVector closeValueFeatureVector = new FeatureVector(closeValueFeatureValues);
 		inputVectors.add(closeValueFeatureVector);
@@ -133,10 +144,8 @@ public class LSH {
 			}
 			FeatureVector randomFeatureVector = new FeatureVector(randomFeatureValues);
 			inputVectors.add(randomFeatureVector);
-			
-		}*/
+		}
 		
-		LSH.computeNeighbours(searchVector, inputVectors, 1.0f);
-		
+		LSH.computeNeighbours(searchVector, inputVectors, 0.2f);
 	}
 }

@@ -48,6 +48,7 @@ public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>
 
 	@Override
 	public int compareTo(SignatureVector toComp) {
+		//FIXME
 		//puuh, totally not sure, better test this
 		BitSet foo1 = (BitSet)this.values.clone();
 		foo1.andNot(toComp.values);
@@ -63,7 +64,7 @@ public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>
 	@Override
 	public String toString() {
 		return "SignatureVector [values=" + values + ", size=" + size
-				+ ", parentVectorId=" + parentVector.getId() + "]";
+				+ ", parentVector=" + parentVector.getId() + "]";
 	}
 
 	public Float computeNormalizedHammingDistance(SignatureVector secondVector){
