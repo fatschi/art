@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
@@ -17,12 +18,12 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 
 public class LSH {
 	
-	private static final int NUMBER_OF_RANDOM_VECTORS_d = 1000;
+	private static final int NUMBER_OF_RANDOM_VECTORS_d = 100;
 	private static final int NUMBER_OF_PERMUTATIONS_q = 5;
-	private static final int WINDOW_SIZE_B = 2;
+	private static final int WINDOW_SIZE_B = 5;
 	private static Random rnd = new Random();
 	
-	public static List<Pair<Integer, FeatureVector>> computeNeighbours(
+	public static List<Pair<Float, FeatureVector>> computeNeighbours(
 			FeatureVector searchVector, Set<FeatureVector> inputVectors,
 			float maxDistance) {
 		
@@ -42,7 +43,7 @@ public class LSH {
 			randomPermutations.put(permutationGenerator.generateRandomPermutation(NUMBER_OF_RANDOM_VECTORS_d), new ArrayList<SignatureVector>());
 		}
 		
-		Map<FeatureVector, List<Float>> candidates = new HashMap<FeatureVector, List<Float>>();
+		Map<FeatureVector, Float> candidates = new HashMap<FeatureVector, Float>();
 		
 		for(int[] randomPermutation : randomPermutations.keySet()){
 			List<SignatureVector> sortedPermutationList = randomPermutations.get(randomPermutation);
@@ -58,35 +59,23 @@ public class LSH {
 			i = i < 0 ? i = 0:i;
 			for(;i< searchVectorsSignaturePosition+WINDOW_SIZE_B && i < sortedPermutationList.size();i++){
 				SignatureVector candidate = sortedPermutationList.get(i);
-				List<Float> candidatesHammingDistances = candidates.get(candidate);
-				if(candidatesHammingDistances==null){
-					candidatesHammingDistances = new ArrayList<Float>();
-					candidates.put(candidate.getParentVector(), candidatesHammingDistances);
+				Float candidatesHammingDistances = candidates.get(candidate);
+				if(candidatesHammingDistances!=null){
+					break;
 				}
-				candidatesHammingDistances.add(searchVectorsSignature.computeNormalizedHammingDistance(candidate));
+				candidatesHammingDistances = searchVectorsSignature.computeNormalizedHammingDistance(candidate);
+				candidates.put(candidate.getParentVector(), candidatesHammingDistances);
 			}
 		}
 		
-		for(Entry<FeatureVector, List<Float>> hammingDistances : candidates.entrySet()){
-			for(Float hammingDistance: hammingDistances.getValue()){
-				if (hammingDistance <= maxDistance) {
-					System.out.println(hammingDistance + ":" + hammingDistances.getKey().getValues());
-					break;
-				}
-				// finding it once is enough is enough.
+		List<Pair<Float, FeatureVector>> resultList = new ArrayList<Pair<Float,FeatureVector>>();
+		for(Entry<FeatureVector, Float> hammingDistances : candidates.entrySet()){
+				if (hammingDistances.getValue() <= maxDistance) {
+					resultList.add(new ImmutablePair<Float, FeatureVector>(hammingDistances.getValue(), hammingDistances.getKey()));
 			}
 		} 
 		
-//		for(Entry<FeatureVector, List<Float>> hammingDistances : candidates.entrySet()){
-//			float averageHammingDistance = 0;
-//			for(Float hammingDistance: hammingDistances.getValue()){
-//				averageHammingDistance+=hammingDistance;
-//			}
-//			averageHammingDistance /= hammingDistances.getValue().size();
-//			if(averageHammingDistance<=maxDistance)
-//				System.out.println(hammingDistances.getKey().getValues()+ ": "+averageHammingDistance);
-//		}
-		return null;
+		return resultList;
 	}
 
 	private static Set<WeightVector> generateRandomWeightVectors(Integer numberOfRandomVectors, Integer dimensionality) {
@@ -146,6 +135,8 @@ public class LSH {
 			inputVectors.add(randomFeatureVector);
 		}
 		
-		LSH.computeNeighbours(searchVector, inputVectors, 0.2f);
+		for(Pair<Float, FeatureVector> match : LSH.computeNeighbours(searchVector, inputVectors, 0.5f)){
+			System.out.println(match);
+		}
 	}
 }

@@ -6,14 +6,14 @@ import java.util.List;
 
 public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>{
 	
-	protected BitSet values;
+	protected ComparableBitSet values;
 	
 	private Integer size;
 	
 	private FeatureVector parentVector;
 	
 	public SignatureVector(FeatureVector parentVector, Integer dimensionality){
-		this.values = new BitSet(dimensionality);
+		this.values = new ComparableBitSet(dimensionality);
 		this.size = dimensionality;
 		this.parentVector= parentVector;
 	}
@@ -48,17 +48,7 @@ public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>
 
 	@Override
 	public int compareTo(SignatureVector toComp) {
-		//FIXME
-		//puuh, totally not sure, better test this
-		BitSet foo1 = (BitSet)this.values.clone();
-		foo1.andNot(toComp.values);
-		BitSet foo2 = (BitSet)toComp.values.clone();
-		foo2.andNot(this.values);
-		if(foo1.nextSetBit(0) < 0 && foo2.nextSetBit(0) < 0) return 0;
-		if(foo1.nextSetBit(0) < 0) return -1;
-		if(foo2.nextSetBit(0) < 0) return 1;
-		if(foo1.nextSetBit(0) > foo2.nextSetBit(0)) return 1;
-		else return -1;
+		return this.values.compareTo(toComp.values);
 	}
 
 	@Override

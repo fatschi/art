@@ -54,7 +54,7 @@ public class FeatureVector implements Vector<Integer>{
 	
 	@Override
 	public String toString() {
-		return "FeatureVector [id=" + id + ", features=" + features
+		return "FeatureVector [id=" + id //+ ", features=" + features
 				+ ", localitySensitiveHashed=" + getLocalitySensitiveHashed()
 				+ "]";
 	}
