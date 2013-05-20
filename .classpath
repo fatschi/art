@@ -6,5 +6,8 @@
 	<classpathentry kind="lib" path="lib/guava-14.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/qtag.jar"/>
 	<classpathentry kind="lib" path="lib/lingpipe-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/boilerpipe-1.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/nekohtml-1.9.13.jar"/>
+	<classpathentry kind="lib" path="lib/xerces-2.9.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
