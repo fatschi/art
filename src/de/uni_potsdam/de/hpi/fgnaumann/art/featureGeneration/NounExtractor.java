@@ -12,6 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.xml.sax.InputSource;
@@ -48,10 +49,10 @@ public class NounExtractor {
 	 * instead of often n small test
 	 */
 	static final int LINES_TO_BUFFER = 100;
-	static Tagger tagger = null; // .mat ending is implicit
+    private Tagger tagger = null; // .mat ending is implicit
 	
 	public NounExtractor() throws IOException {
-		Tagger tagger = new Tagger("lib/qtag-eng");
+		tagger = new Tagger("lib/english");
 	}
 	
 	/**
@@ -61,7 +62,7 @@ public class NounExtractor {
 	 * @throws IOException
 	 */
 	public NounExtractor(BufferedReader bufr) throws IOException {
-//		Tagger tagger = new Tagger("lib/qtageng");
+		Tagger tagger = new Tagger("lib/english");
 		BR = bufr;
 	}
 
@@ -71,13 +72,21 @@ public class NounExtractor {
 		BufferedReader br = new BufferedReader(in);
 		return br;
 	}
-	
-	public static void main(String[] args) throws IOException{
-		
-		
-		args[0] = "/media/zwerg/art/rss_article.sql";
+
+	/**
+	 * Extracts a plain text, one article per sentence, version from
+	 * the SQL dump corpus. Cleans up uneeded clutter.
+	 * @param args
+	 * @throws UnsupportedEncodingException
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public static void extractFullTextCorpus(String[] args)
+			throws UnsupportedEncodingException, FileNotFoundException,
+			IOException {
+		args[0] = "/media/zwerg/art/rss_article.sql.earaseEndingToUse";
 		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(args[0] + "_Nouns.txt"), "ascii"));
+				new FileOutputStream(args[0] + "__Nouns.txt"), "ascii"));
 		NounExtractor nE = new NounExtractor(makeReader(args[0]));
 		String page = null;
 		long count = 0;
@@ -85,7 +94,9 @@ public class NounExtractor {
 			while ((page = nE.nextWebPage()) != null) {
 				page = nE.htmlToFulltext(page).replaceAll("', '", "").replaceAll(" +", " ").trim(); // Removes unnecessary spaces and left over ', ' clutter.
 				bw.write(page.replace("Custom Content\nour partners\n", "") // removes boiler plate left overs
-							 .replaceAll("Follow \\@\\w+ ", "") + "\n");          // removes twitter tags
+							 .replaceAll("Follow \\@\\w+ ", "")				// removes twitter tags
+							 .replaceAll("\n", " ")                         // turn article into one lines
+							 + "\n");          								// Write article into one line
 				if (++count % 100 ==0) {
 					System.out.println(count + " pages processed");
 				}
@@ -99,12 +110,6 @@ public class NounExtractor {
 			nE.close(); // Once all pages have been parsed
 			bw.close();
 		}
-		
-		
-//		fulltextTest();
-		
-//		String path = args[1];
-//		extractNounsAndStoreToFile(path);
 	}
 
 	/**
@@ -135,6 +140,12 @@ public class NounExtractor {
 		return null;
 	}
 
+	/**
+	 * Test function to test the fultext extractor
+	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
+	 * @throws IOException
+	 */
 	private static void fulltextTest() throws FileNotFoundException,
 			UnsupportedEncodingException, IOException {
 		// Fulltext Test
@@ -160,7 +171,7 @@ public class NounExtractor {
 	 * @param location path to the corpus.
 	 * @throws IOException
 	 */
-	private static void extractNounsAndStoreToFile(String location) throws IOException {
+	public void extractNounsAndStoreToFile(String location) throws IOException {
 		// INIT
 		HashMap<String, Long> posMap = new HashMap<String, Long>(10000, 0.95f);
 
@@ -185,6 +196,7 @@ public class NounExtractor {
 
 			++linecount;
 
+			if (linecount != 1) {
 			// buffering for processing speed of the tagger
 			if (linecount % LINES_TO_BUFFER == 0) {
 				posMap.putAll(getNouns(oneLongString.toString()));
@@ -204,18 +216,19 @@ public class NounExtractor {
 				stillBuffered = false;
 				oneLongString.delete(0, oneLongString.length());
 			}
-
-			// OUTPUT
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(location + "_Nouns"), "ascii"));
-			for (String poskey : posMap.keySet()) {
-				bw.write(poskey + "\t" + posMap.get(poskey) + "\n");
 			}
-			
-			// STATS
-			System.out.println("# lines processed:" + linecount);
-			bw.close();
 		}
+		
+		// OUTPUT
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(location + "_Nouns.txt"), "ascii"));
+		for (String poskey : posMap.keySet()) {
+			bw.write(posMap.get(poskey) + "\t" + poskey + "\n");
+		}
+		
+		// STATS
+		System.out.println("# lines processed:" + linecount);
+		bw.close();
 	}
 
 	/**
@@ -224,7 +237,7 @@ public class NounExtractor {
 	 * @param oneLongString
 	 * @return
 	 */
-	public static HashMap<String, Long> getNouns(String oneLongString) {
+	public HashMap<String, Long> getNouns(String oneLongString) {
 		
 		// Result
 		HashMap<String, Long> nouns = new HashMap<String, Long>();
@@ -237,13 +250,17 @@ public class NounExtractor {
 				oneLongString.toCharArray(), 0,
 				oneLongString.length());
 		tokenizer.tokenize(tokenList, whiteList);
-		String[] tokens = new String[tokenList.size()]; // Words
-		String[] tags = tagger.tag(tokens);				// POS tag per word
+		String[] tokens = tokenList.toArray(new String[tokenList.size()]); // Words
+		String[] tags = this.tagger.tag(tokens);								   // POS tag per word
+		
+		HashSet<String> nullWords = new HashSet<String>();
 		
 		// Save found nouns to HashMap
 		for (int i = 0; i < tags.length; i++) {
-			if (tags[i].startsWith("N") ||   // Noun types
-				tags[i].startsWith("??")) {  // Unknowns (we assume nouns, names etc.) Details in README.md.
+			try {
+			if (tags[i].startsWith("FW") ||   // foreign words are often names of objects, concepts or people
+				tags[i].startsWith("N")  ||   // Noun types
+				tags[i].startsWith("??")) {   // Unknowns (we assume nouns, names etc.) Details in README.md.
 				Long oldcount = nouns.get(tokens[i]);
 				if (oldcount != null) {
 					nouns.put(tokens[i], oldcount + 1); // found once more
@@ -251,6 +268,14 @@ public class NounExtractor {
 					nouns.put(tokens[i], 1L); 			// found once
 				}
 			}
+			}
+			catch (Exception e) {
+				nullWords.add(tokens[i]);
+			}
+		}
+		
+		if (!nullWords.isEmpty()) {
+			System.out.print(nullWords + " ");
 		}
 		return nouns;
 	}
@@ -269,6 +294,14 @@ public class NounExtractor {
 			e.printStackTrace();
 		}
         return fulltext;
+	}
+	
+	public static void main(String[] args) throws IOException{
+//		extractFullTextCorpus(args);
+//		String path = "TestDocs/POSparseTest.txt";
+		String path = "/media/zwerg/art/rss_article.sql_Nouns.txt";
+		NounExtractor nE = new NounExtractor();
+		nE.extractNounsAndStoreToFile(path);
 	}
 }
 
