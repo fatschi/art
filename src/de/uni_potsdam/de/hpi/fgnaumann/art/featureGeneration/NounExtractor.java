@@ -274,7 +274,8 @@ public class NounExtractor {
 				tags[i].startsWith("FW") ||   // foreign words are often names of objects, concepts or people
 				tags[i].startsWith("N")   ){   // Noun types
 //				tags[i].startsWith("??")) {   // Unknowns (we assume nouns, names etc.) Details in README.md.
-				if (tokens[i].matches("\\w{2,}")) { // Only words not signs or the like. min 2 letters
+//				if (tokens[i].matches("\\A\\w{2,}\\z")) { // Only words not signs or the like. min 2 letters
+					if (tokens[i].matches("^[a-zA-Z]{2,}+$")) { // Only words not signs or the like. min 2 letters
 				Long oldcount = nouns.get(tokens[i]);
 				if (oldcount != null) {
 					nouns.put(tokens[i], oldcount + 1); // found once more
