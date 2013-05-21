@@ -42,7 +42,6 @@ public class NounExtractor {
 	static final SentenceModel SENTENCE_MODEL = new MedlineSentenceModel();
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
 	static BufferedReader BR = null;
-	final static String ESC = "\033["; // screen clear symbol
 	/*
 	 * Controls how many strings are buffer as one large text line before they
 	 * are tagged. REASON: Tagger is a lot faster when its used less often
@@ -199,7 +198,7 @@ public class NounExtractor {
 			if (linecount != 1) {
 			// buffering for processing speed of the tagger
 			if (linecount % LINES_TO_BUFFER == 0) {
-				posMap.putAll(getNouns(oneLongString.toString()));
+				addAll(posMap, getNouns(oneLongString.toString()));
 				stillBuffered = false;								// Reset buffer
 				oneLongString.delete(0, oneLongString.length());    // ... 
 			}
@@ -212,7 +211,7 @@ public class NounExtractor {
 
 			// To catch non buffered left overs. Do the last few lines.
 			if (stillBuffered) {
-				posMap.putAll(getNouns(oneLongString.toString()));
+				addAll(posMap, getNouns(oneLongString.toString()));
 				stillBuffered = false;
 				oneLongString.delete(0, oneLongString.length());
 			}
@@ -229,6 +228,24 @@ public class NounExtractor {
 		// STATS
 		System.out.println("# lines processed:" + linecount);
 		bw.close();
+	}
+
+	/**
+	 * Add new noun counts to previous noun counts.
+	 * @param posMap
+	 * @param nouns
+	 */
+	private void addAll(HashMap<String, Long> posMap,
+			HashMap<String, Long> nouns) {
+		Long count = 0l;
+		for (String noun : nouns.keySet()) {
+			count = posMap.get(noun);
+			if (count!=null) {
+				posMap.put(noun, nouns.get(noun) + count); // Add previous
+			} else {
+				posMap.put(noun, nouns.get(noun));		   // Store latest
+			}
+		}
 	}
 
 	/**
@@ -253,12 +270,10 @@ public class NounExtractor {
 		String[] tokens = tokenList.toArray(new String[tokenList.size()]); // Words
 		String[] tags = this.tagger.tag(tokens);								   // POS tag per word
 		
-		HashSet<String> nullWords = new HashSet<String>();
-		
 		// Save found nouns to HashMap
 		for (int i = 0; i < tags.length; i++) {
-			try {
-			if (tags[i].startsWith("FW") ||   // foreign words are often names of objects, concepts or people
+			if (tags[i] == null          ||   // words like, capita and fait appelli produce null POS tags. Are infact nouns.
+				tags[i].startsWith("FW") ||   // foreign words are often names of objects, concepts or people
 				tags[i].startsWith("N")  ||   // Noun types
 				tags[i].startsWith("??")) {   // Unknowns (we assume nouns, names etc.) Details in README.md.
 				Long oldcount = nouns.get(tokens[i]);
@@ -269,14 +284,6 @@ public class NounExtractor {
 				}
 			}
 			}
-			catch (Exception e) {
-				nullWords.add(tokens[i]);
-			}
-		}
-		
-		if (!nullWords.isEmpty()) {
-			System.out.print(nullWords + " ");
-		}
 		return nouns;
 	}
 	
