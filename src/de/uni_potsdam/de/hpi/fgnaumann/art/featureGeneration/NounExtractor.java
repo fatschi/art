@@ -43,7 +43,7 @@ public class NounExtractor {
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
 	static BufferedReader BR = null;
 	/*
-	 * Controls how many strings are buffer as one large text line before they
+	 * Controls how many strings are buffered as one large text line before they
 	 * are tagged. REASON: Tagger is a lot faster when its used less often
 	 * instead of often n small test
 	 */
@@ -195,7 +195,6 @@ public class NounExtractor {
 
 			++linecount;
 
-			if (linecount != 1) {
 			// buffering for processing speed of the tagger
 			if (linecount % LINES_TO_BUFFER == 0) {
 				addAll(posMap, getNouns(oneLongString.toString()));
@@ -215,12 +214,11 @@ public class NounExtractor {
 				stillBuffered = false;
 				oneLongString.delete(0, oneLongString.length());
 			}
-			}
 		}
 		
 		// OUTPUT
 		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(location + "_Nouns.txt"), "ascii"));
+				new FileOutputStream(location + "_CommonNouns.txt"), "ascii"));
 		for (String poskey : posMap.keySet()) {
 			bw.write(posMap.get(poskey) + "\t" + poskey + "\n");
 		}
@@ -274,13 +272,15 @@ public class NounExtractor {
 		for (int i = 0; i < tags.length; i++) {
 			if (tags[i] == null          ||   // words like, capita and fait appelli produce null POS tags. Are infact nouns.
 				tags[i].startsWith("FW") ||   // foreign words are often names of objects, concepts or people
-				tags[i].startsWith("N")  ||   // Noun types
-				tags[i].startsWith("??")) {   // Unknowns (we assume nouns, names etc.) Details in README.md.
+				tags[i].startsWith("N")   ){   // Noun types
+//				tags[i].startsWith("??")) {   // Unknowns (we assume nouns, names etc.) Details in README.md.
+				if (tokens[i].matches("\\w{2,}")) { // Only words not signs or the like. min 2 letters
 				Long oldcount = nouns.get(tokens[i]);
 				if (oldcount != null) {
 					nouns.put(tokens[i], oldcount + 1); // found once more
 				} else {
 					nouns.put(tokens[i], 1L); 			// found once
+				}
 				}
 			}
 			}
