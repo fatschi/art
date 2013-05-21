@@ -1,0 +1,10 @@
+Text corpus.
+
+# POS tagging:
++ corpus contains the words "fait appelli and capita": QTag assigns them a null tag
++ FW (foreign words are used as nouns)
+
+# SQL Dump to Plaintext:
+- Palaintext 1st line may be an SQL header
++ 1 line per article
++ end of each line contains article link and database ID
