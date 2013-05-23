@@ -9,13 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-
-import org.xml.sax.InputSource;
 
 import qtag.Tagger;
 
@@ -27,7 +23,6 @@ import com.aliasi.tokenizer.TokenizerFactory;
 
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
-import de.l3s.boilerpipe.sax.HTMLFetcher;
 
 /**
  * Class to extract only the nouns from a text. NLP parsing task. 1. Divide text

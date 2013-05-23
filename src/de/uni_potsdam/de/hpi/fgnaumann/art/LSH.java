@@ -1,7 +1,7 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.collections.bag.TreeBag;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -19,14 +20,14 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 public class LSH {
 	
 	private static final int NUMBER_OF_RANDOM_VECTORS_d = 100;
-	private static final int NUMBER_OF_PERMUTATIONS_q = 5;
+	private static final int NUMBER_OF_PERMUTATIONS_q = 10;
 	private static final int WINDOW_SIZE_B = 5;
 	private static Random rnd = new Random();
 	
 	public static List<Pair<Float, FeatureVector>> computeNeighbours(
 			FeatureVector searchVector, Set<FeatureVector> inputVectors,
 			float maxDistance) {
-		
+		System.out.println("LSH");
 		//step 2
 		Set<WeightVector> randomVectors = generateRandomWeightVectors(NUMBER_OF_RANDOM_VECTORS_d, searchVector.getDimensionality());
 		
@@ -37,33 +38,35 @@ public class LSH {
 		}
 		
 		//step 4
-		Map<int[], List<SignatureVector>> randomPermutations = new HashMap<int[], List<SignatureVector>>();
+		Map<int[], TreeBag> randomPermutations = new HashMap<int[], TreeBag>();
 		PermutationGenerator permutationGenerator = new FisherYates();
 		for(int i = 0; i < NUMBER_OF_PERMUTATIONS_q; i++){
-			randomPermutations.put(permutationGenerator.generateRandomPermutation(NUMBER_OF_RANDOM_VECTORS_d), new ArrayList<SignatureVector>());
+			randomPermutations.put(permutationGenerator.generateRandomPermutation(NUMBER_OF_RANDOM_VECTORS_d), new TreeBag());
 		}
 		
 		Map<FeatureVector, Float> candidates = new HashMap<FeatureVector, Float>();
 		
 		for(int[] randomPermutation : randomPermutations.keySet()){
-			List<SignatureVector> sortedPermutationList = randomPermutations.get(randomPermutation);
+			TreeBag sortedPermutationList = randomPermutations.get(randomPermutation);
 			SignatureVector searchVectorPermutation = searchVector.permute(randomPermutation);
 			sortedPermutationList.add(searchVectorPermutation);
 			for(FeatureVector inputVector : inputVectors){
 				sortedPermutationList.add(inputVector.permute(randomPermutation));
 			}
-			Collections.sort(sortedPermutationList);
-			Integer searchVectorsSignaturePosition = sortedPermutationList.indexOf(searchVectorPermutation);
-			SignatureVector searchVectorsSignature = sortedPermutationList.get(searchVectorsSignaturePosition);
+			SignatureVector[] sortedPermutationArray = new SignatureVector[sortedPermutationList.size()];
+			sortedPermutationList.toArray(sortedPermutationArray);
+			//try to optimize gc
+			sortedPermutationList = null;
+			int searchVectorsSignaturePosition = Arrays.binarySearch(sortedPermutationArray, searchVectorPermutation);
 			int i = searchVectorsSignaturePosition-WINDOW_SIZE_B;
 			i = i < 0 ? i = 0:i;
-			for(;i< searchVectorsSignaturePosition+WINDOW_SIZE_B && i < sortedPermutationList.size();i++){
-				SignatureVector candidate = sortedPermutationList.get(i);
+			for(;i< searchVectorsSignaturePosition+WINDOW_SIZE_B && i < sortedPermutationArray.length;i++){
+				SignatureVector candidate = sortedPermutationArray[i];
 				Float candidatesHammingDistances = candidates.get(candidate);
 				if(candidatesHammingDistances!=null){
 					break;
 				}
-				candidatesHammingDistances = searchVectorsSignature.computeNormalizedHammingDistance(candidate);
+				candidatesHammingDistances = searchVectorPermutation.computeNormalizedHammingDistance(candidate);
 				candidates.put(candidate.getParentVector(), candidatesHammingDistances);
 			}
 		}
@@ -111,7 +114,7 @@ public class LSH {
 		inputVectors.add(inputVector2);
 		inputVectors.add(inputVector3);*/
 		
-		final int randomFeatureVectorSize = 1000;
+		final int randomFeatureVectorSize = 10000;
 		
 		Integer[] zeroFeatureValues = new Integer[randomFeatureVectorSize];
 		for(int j = 0; j< randomFeatureVectorSize; j++){
@@ -126,7 +129,7 @@ public class LSH {
 		FeatureVector closeValueFeatureVector = new FeatureVector(closeValueFeatureValues);
 		inputVectors.add(closeValueFeatureVector);
 		
-		for(int i = 0; i<1000;i++){
+		for(int i = 0; i<100;i++){
 			Integer[] randomFeatureValues = new Integer[randomFeatureVectorSize];
 			for(int j = 0; j< randomFeatureVectorSize; j++){
 				randomFeatureValues[j] = rnd.nextInt()%100;
@@ -135,7 +138,7 @@ public class LSH {
 			inputVectors.add(randomFeatureVector);
 		}
 		
-		for(Pair<Float, FeatureVector> match : LSH.computeNeighbours(searchVector, inputVectors, 0.5f)){
+		for(Pair<Float, FeatureVector> match : LSH.computeNeighbours(searchVector, inputVectors, 0.2f)){
 			System.out.println(match);
 		}
 	}
