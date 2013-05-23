@@ -1,5 +1,7 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.test;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,9 +26,10 @@ public class SignatureVectorComparableTest {
 		
 		
 		foo1.setValue(1, new Bit(true));
+		foo1.setValue(2, new Bit(true));
 		foo2.setValue(2, new Bit(true));
+		foo2.setValue(3, new Bit(true));
 		foo3.setValue(2, new Bit(true));
-		foo3.setValue(3, new Bit(true));
 		foo4.setValue(4, new Bit(true));
 		foo5.setValue(5, new Bit(true));
 		
@@ -40,6 +43,16 @@ public class SignatureVectorComparableTest {
 		sortedList.add(foo6);
 		
 		Collections.sort(sortedList);
+		List<SignatureVector> assertedList = new ArrayList<SignatureVector>();
+		assertedList.add(foo7);
+		assertedList.add(foo1);
+		assertedList.add(foo2);
+		assertedList.add(foo3);
+		assertedList.add(foo4);
+		assertedList.add(foo5);
+		assertedList.add(foo6);
+		assertEquals(sortedList, assertedList);
+		
 		
 	}
 

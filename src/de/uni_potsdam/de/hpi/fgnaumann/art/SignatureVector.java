@@ -54,7 +54,7 @@ public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>
 	@Override
 	public String toString() {
 		return "SignatureVector [values=" + values + ", size=" + size
-				+ ", parentVector=" + parentVector.getId() + "]";
+				+ ", parentVector=" + (parentVector != null ? parentVector.getId() : "no parent") + "]";
 	}
 
 	public Float computeNormalizedHammingDistance(SignatureVector secondVector){
