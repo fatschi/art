@@ -1,4 +1,4 @@
-package de.uni_potsdam.de.hpi.fgnaumann.art;
+package de.uni_potsdam.de.hpi.fgnaumann.art.vectors;
 
 import java.util.List;
 

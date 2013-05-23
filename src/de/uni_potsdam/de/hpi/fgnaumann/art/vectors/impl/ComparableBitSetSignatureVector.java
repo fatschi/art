@@ -1,18 +1,23 @@
-package de.uni_potsdam.de.hpi.fgnaumann.art;
+package de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>{
+import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
+import de.uni_potsdam.de.hpi.fgnaumann.art.util.ComparableBitSet;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
+
+public class ComparableBitSetSignatureVector implements SignatureVector, Comparable<ComparableBitSetSignatureVector>{
 	
 	protected ComparableBitSet values;
 	
 	private Integer size;
 	
-	private FeatureVector parentVector;
+	private FeatureVector<? extends Number> parentVector;
 	
-	public SignatureVector(FeatureVector parentVector, Integer dimensionality){
+	public ComparableBitSetSignatureVector(FeatureVector<? extends Number> parentVector, Integer dimensionality){
 		this.values = new ComparableBitSet(dimensionality);
 		this.size = dimensionality;
 		this.parentVector= parentVector;
@@ -42,12 +47,13 @@ public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>
 		return new Bit(this.values.get(dimension));
 	}
 
-	public FeatureVector getParentVector() {
+	@Override
+	public FeatureVector<? extends Number> getParentVector() {
 		return parentVector;
 	}
 
 	@Override
-	public int compareTo(SignatureVector toComp) {
+	public int compareTo(ComparableBitSetSignatureVector toComp) {
 		return this.values.compareTo(toComp.values);
 	}
 
@@ -57,10 +63,29 @@ public class SignatureVector implements Vector<Bit>, Comparable<SignatureVector>
 				+ ", parentVector=" + (parentVector != null ? parentVector.getId() : "no parent") + "]";
 	}
 
+	@Override
 	public Float computeNormalizedHammingDistance(SignatureVector secondVector){
 		BitSet foo1 = (BitSet)this.values.clone();
-		foo1.xor(secondVector.values);
+		foo1.xor(secondVector.getValuesAsBitSet());
 		return (foo1.cardinality()/(float)this.getDimensionality());
+	}
+	
+	@Override
+	public SignatureVector permute(int[] randomPermutation) {
+		SignatureVector permutation = new ComparableBitSetSignatureVector(this.parentVector,
+				this.getDimensionality());
+		int i = 0;
+		for (int position : randomPermutation) {
+			permutation.setValue(i,
+					this.getValue(position));
+			i++;
+		}
+		return permutation;
+	}
+
+	@Override
+	public BitSet getValuesAsBitSet() {
+		return this.values;
 	}
 	
 }

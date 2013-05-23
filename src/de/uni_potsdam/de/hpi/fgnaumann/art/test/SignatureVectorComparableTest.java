@@ -8,20 +8,20 @@ import java.util.List;
 
 import org.junit.Test;
 
-import de.uni_potsdam.de.hpi.fgnaumann.art.Bit;
-import de.uni_potsdam.de.hpi.fgnaumann.art.SignatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
 
 public class SignatureVectorComparableTest {
 
 	@Test
 	public void testRightOrderingOfSignatureVectors() {
-		SignatureVector foo1 = new SignatureVector(null, 5);
-		SignatureVector foo2 = new SignatureVector(null, 5);
-		SignatureVector foo3 = new SignatureVector(null, 5);
-		SignatureVector foo4 = new SignatureVector(null, 5);
-		SignatureVector foo5 = new SignatureVector(null, 5);
-		SignatureVector foo6 = new SignatureVector(null, 5);
-		SignatureVector foo7 = new SignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo1 = new ComparableBitSetSignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo2 = new ComparableBitSetSignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo3 = new ComparableBitSetSignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo4 = new ComparableBitSetSignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo5 = new ComparableBitSetSignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo6 = new ComparableBitSetSignatureVector(null, 5);
+		ComparableBitSetSignatureVector foo7 = new ComparableBitSetSignatureVector(null, 5);
 		foo7.setValue(1, new Bit(true));foo7.setValue(2, new Bit(true));foo7.setValue(3, new Bit(true));foo7.setValue(4, new Bit(true));foo7.setValue(5, new Bit(true));
 		
 		
@@ -33,7 +33,7 @@ public class SignatureVectorComparableTest {
 		foo4.setValue(4, new Bit(true));
 		foo5.setValue(5, new Bit(true));
 		
-		List<SignatureVector> sortedList = new ArrayList<SignatureVector>();
+		List<ComparableBitSetSignatureVector> sortedList = new ArrayList<ComparableBitSetSignatureVector>();
 		sortedList.add(foo4);
 		sortedList.add(foo3);
 		sortedList.add(foo2);
@@ -43,7 +43,7 @@ public class SignatureVectorComparableTest {
 		sortedList.add(foo6);
 		
 		Collections.sort(sortedList);
-		List<SignatureVector> assertedList = new ArrayList<SignatureVector>();
+		List<ComparableBitSetSignatureVector> assertedList = new ArrayList<ComparableBitSetSignatureVector>();
 		assertedList.add(foo7);
 		assertedList.add(foo1);
 		assertedList.add(foo2);

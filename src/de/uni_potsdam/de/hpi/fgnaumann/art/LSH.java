@@ -20,6 +20,11 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.DoubleListFeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.IntegerListFeatureVector;
 
 public class LSH {
 
@@ -28,42 +33,42 @@ public class LSH {
 
 	private static final int CORES = Runtime.getRuntime().availableProcessors();
 	private static final int NTHREADS = CORES * 2;
-	private static final int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
+	private static final int CHUNK_SIZE_CLASSIFIER_WORKER = 10;
 
 	private static final int NUMBER_OF_RANDOM_VECTORS_d = 100;
-	private static final int NUMBER_OF_PERMUTATIONS_q = 100;
+	private static final int NUMBER_OF_PERMUTATIONS_q = 10000;
 	private static final int WINDOW_SIZE_B = 50;
 
 	private static final int NUMBER_OF_SIMULATION_VECTORS = 998;
-	private static final int DIMENSIONS_OF_SIMULATION_VECTORS = 100000;
+	private static final int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
 
 	private static Random rnd = new Random();
 
-	public static List<Pair<Float, FeatureVector>> computeNeighbours(
-			FeatureVector searchVector, Set<FeatureVector> inputVectors,
+	public static List<Pair<Float, FeatureVector<? extends Number>>> computeNeighbours(
+			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			float maxDistance) {
 		inputVectors.add(searchVector);
 		// step 2
 		logger.trace("starting generation of random vectors");
-		Set<WeightVector> randomVectors = generateRandomWeightVectors(
+		Set<FeatureVector<? extends Number>> randomVectors = generateRandomWeightVectors(
 				NUMBER_OF_RANDOM_VECTORS_d, searchVector.getDimensionality());
 		logger.trace("finished generation of random vectors");
 
 		logger.trace("setting up executor for classification");
 		ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
 
-		logger.trace("assigning workers to executor");
+		logger.trace("starting assignment of workers to executor");
 		int chunkSize = 0;
-		Set<FeatureVector> tempSet = new HashSet<FeatureVector>();
+		Set<FeatureVector<? extends Number>> tempSet = new HashSet<FeatureVector<? extends Number>>();
 		int chunkCount = 0;
-		for (FeatureVector inputVector : inputVectors) {
+		for (FeatureVector<? extends Number> inputVector : inputVectors) {
 			if (!(chunkSize != 0 && chunkSize % CHUNK_SIZE_CLASSIFIER_WORKER == 0)) {
 				tempSet.add(inputVector);
 				chunkSize++;
 			} else {
 				Runnable worker = new ClassifierWorker(tempSet, randomVectors);
 				executor.execute(worker);
-				tempSet = new HashSet<FeatureVector>();
+				tempSet = new HashSet<FeatureVector<? extends Number>>();
 				chunkSize = 0;
 				chunkCount++;
 				tempSet.add(inputVector);
@@ -77,13 +82,14 @@ public class LSH {
 			chunkCount++;
 		}
 
-		logger.trace("finished assigning of %,d worker chunks to executor",
-				chunkCount);
+		logger.trace("finished assignment of %d %s chunks to executor",
+				chunkCount, (chunkCount > 1 ? "workers" : "worker"));
 		executor.shutdown();
 		while (!executor.isTerminated()) {
 
 		}
 		logger.trace("all classification workers finished");
+		
 		// step 4
 		logger.trace("started creation of random permutations");
 		Map<int[], TreeBag> randomPermutations = new HashMap<int[], TreeBag>();
@@ -96,28 +102,32 @@ public class LSH {
 		logger.trace("finished creation of random permutations");
 
 		logger.trace("started random permutations and sorting with neighbour lookup");
-		Map<FeatureVector, Float> candidates = new HashMap<FeatureVector, Float>();
+		Map<FeatureVector<? extends Number>, Float> candidates = new HashMap<FeatureVector<? extends Number>, Float>();
 
 		for (int[] randomPermutation : randomPermutations.keySet()) {
 			TreeBag sortedPermutationList = randomPermutations
 					.get(randomPermutation);
+
 			SignatureVector searchVectorPermutation = searchVector
-					.permute(randomPermutation);
+					.getLocalitySensitiveHashed().permute(randomPermutation);
 			sortedPermutationList.add(searchVectorPermutation);
-			for (FeatureVector inputVector : inputVectors) {
-				sortedPermutationList.add(inputVector
+			
+			for (FeatureVector<? extends Number> inputVector : inputVectors) {
+				sortedPermutationList.add(inputVector.getLocalitySensitiveHashed()
 						.permute(randomPermutation));
 			}
-			SignatureVector[] sortedPermutationArray = new SignatureVector[sortedPermutationList
+			SignatureVector[] sortedPermutationArray = new ComparableBitSetSignatureVector[sortedPermutationList
 					.size()];
 			sortedPermutationList.toArray(sortedPermutationArray);
+			
 			// try to optimize gc
 			sortedPermutationList = null;
+			
 			int searchVectorsSignaturePosition = Arrays.binarySearch(
 					sortedPermutationArray, searchVectorPermutation);
-			int i = searchVectorsSignaturePosition - WINDOW_SIZE_B;
+			int i = searchVectorsSignaturePosition - WINDOW_SIZE_B/2;
 			i = i < 0 ? i = 0 : i;
-			for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B
+			for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B/2
 					&& i < sortedPermutationArray.length; i++) {
 				SignatureVector candidate = sortedPermutationArray[i];
 				Float candidatesHammingDistances = candidates.get(candidate);
@@ -133,12 +143,12 @@ public class LSH {
 		logger.trace("finished random permutations and sorting with neighbour lookup");
 
 		logger.trace("started filtering of neighbours by threshold");
-		List<Pair<Float, FeatureVector>> resultList = new ArrayList<Pair<Float, FeatureVector>>();
-		for (Entry<FeatureVector, Float> hammingDistances : candidates
+		List<Pair<Float, FeatureVector<? extends Number>>> resultList = new ArrayList<Pair<Float, FeatureVector<? extends Number>>>();
+		for (Entry<FeatureVector<? extends Number>, Float> hammingDistances : candidates
 				.entrySet()) {
 			if (hammingDistances.getValue() <= maxDistance) {
 				resultList
-						.add(new ImmutablePair<Float, FeatureVector>(
+						.add(new ImmutablePair<Float, FeatureVector<? extends Number>>(
 								hammingDistances.getValue(), hammingDistances
 										.getKey()));
 			}
@@ -148,47 +158,36 @@ public class LSH {
 		return resultList;
 	}
 
-	private static Set<WeightVector> generateRandomWeightVectors(
+	private static Set<FeatureVector<? extends Number>> generateRandomWeightVectors(
 			Integer numberOfRandomVectors, Integer dimensionality) {
-		Set<WeightVector> randomWeightVectors = new HashSet<WeightVector>();
+		Set<FeatureVector<? extends Number>> randomWeightVectors = new HashSet<FeatureVector<? extends Number>>();
 		// For d random projections.
 		for (int di = 0; di < numberOfRandomVectors; di++) {
 			// Randomly generate a weight vector of random normal mean 0 and
 			// variance 1 weights.
-			WeightVector dI = new WeightVector(dimensionality);
+			FeatureVector<Double> dI = new DoubleListFeatureVector();
 			for (int ki = 0; ki < dimensionality; ki++) {
-				dI.setValue(ki, drawNormal());
+				dI.setValue(ki, rnd.nextGaussian());
 			}
 			randomWeightVectors.add(dI);
 		}
 		return randomWeightVectors;
 	}
 
-	/**
-	 * Draw from a Gaussian using mean 0 and variance 1. This is implemented in
-	 * JDK vi the Box Mueller transform.
-	 * 
-	 * @return a gaussian random value.
-	 */
-	private static float drawNormal() {
-		return (float) rnd.nextGaussian();
-	}
-
 	public static void main(String args[]) {
 
-		Set<FeatureVector> inputVectors = new HashSet<FeatureVector>();
+		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<?>>();
 
 		Integer[] zeroFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 		for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 			zeroFeatureValues[j] = 1;
 		}
-		FeatureVector searchVector = new FeatureVector(-1, zeroFeatureValues);
-
+		FeatureVector<? extends Number> searchVector = new IntegerListFeatureVector(-1, zeroFeatureValues);
 		Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 		for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 			closeValueFeatureValues[j] = j % 5 + 1;
 		}
-		FeatureVector closeValueFeatureVector = new FeatureVector(
+		FeatureVector<? extends Number> closeValueFeatureVector = new IntegerListFeatureVector(
 				inputVectors.size(), closeValueFeatureValues);
 		inputVectors.add(closeValueFeatureVector);
 
@@ -197,12 +196,12 @@ public class LSH {
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 				randomFeatureValues[j] = rnd.nextInt() % 100;
 			}
-			FeatureVector randomFeatureVector = new FeatureVector(
+			FeatureVector<? extends Number> randomFeatureVector = new IntegerListFeatureVector(
 					inputVectors.size(), randomFeatureValues);
 			inputVectors.add(randomFeatureVector);
 		}
 
-		for (Pair<Float, FeatureVector> match : LSH.computeNeighbours(
+		for (Pair<Float, FeatureVector<? extends Number>> match : LSH.computeNeighbours(
 				searchVector, inputVectors, 0.2f)) {
 			logger.info(match);
 		}

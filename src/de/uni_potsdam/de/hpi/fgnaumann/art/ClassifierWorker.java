@@ -3,20 +3,22 @@ package de.uni_potsdam.de.hpi.fgnaumann.art;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ClassifierWorker implements Runnable {
-	Set<FeatureVector> workingChunk = new HashSet<FeatureVector>();
-	Set<WeightVector> randomVectors = new HashSet<WeightVector>();
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 
-	public ClassifierWorker(Set<FeatureVector> workingChunk,
-			Set<WeightVector> randomVectors) {
+public class ClassifierWorker implements Runnable {
+	Set<FeatureVector<? extends Number>> workingChunk = new HashSet<FeatureVector<? extends Number>>();
+	Set<FeatureVector<? extends Number>> randomWeightVectors = new HashSet<FeatureVector<? extends Number>>();
+
+	public ClassifierWorker(Set<FeatureVector<? extends Number>> workingChunk,
+			Set<FeatureVector<? extends Number>> randomWeightVectors) {
 		this.workingChunk = workingChunk;
-		this.randomVectors = randomVectors;
+		this.randomWeightVectors = randomWeightVectors;
 	}
 
 	@Override
 	public void run() {
-		for (FeatureVector inputVector : workingChunk) {
-			inputVector.createLSH(randomVectors);
+		for (FeatureVector<? extends Number> inputVector : workingChunk) {
+			inputVector.createLSH(randomWeightVectors);
 		}
 	}
 }

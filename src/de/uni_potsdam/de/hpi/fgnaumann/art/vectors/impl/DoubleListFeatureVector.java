@@ -1,22 +1,26 @@
-package de.uni_potsdam.de.hpi.fgnaumann.art;
+package de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class FeatureVector implements Vector<Integer>{
+import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
+
+public class DoubleListFeatureVector implements FeatureVector<Double>{
 	private Integer id;
-	private List<Integer> features;
+	private List<Double> features;
 	private SignatureVector localitySensitiveHashed;
 	
-	public FeatureVector(Integer... features){
-		this.features = new ArrayList<Integer>();
-		for(int feature : features){
+	public DoubleListFeatureVector(Double... features){
+		this.features = new ArrayList<Double>();
+		for(double feature : features){
 			this.features.add(feature);
 		}
 	}
-	
-	public FeatureVector(Integer id, Integer... features){
+
+	public DoubleListFeatureVector(Integer id, Double... features){
 		this(features);
 		this.id = id;
 	}
@@ -25,11 +29,12 @@ public class FeatureVector implements Vector<Integer>{
 	 * Create a bit signature using d classification steps. 
 	 * @param d - the input random weight vector of counts.
 	 */
-	public void createLSH(Set<WeightVector> randomVectors){
-		this.setLocalitySensitiveHashed(new SignatureVector(this, randomVectors.size()));
+	@Override
+	public void createLSH(Set<FeatureVector<? extends Number>> randomVectors){
+		this.localitySensitiveHashed = new ComparableBitSetSignatureVector(this, randomVectors.size());
 		// Do d number of classifications
 		int i=0;
-		for(WeightVector weightVector : randomVectors){
+		for(FeatureVector<? extends Number> weightVector : randomVectors){
 			this.getLocalitySensitiveHashed().setValue(i,new Bit(classify(weightVector)));
 			i++;
 		}
@@ -41,11 +46,11 @@ public class FeatureVector implements Vector<Integer>{
 	 * @param wd
 	 * @return
 	 */
-	private boolean classify(WeightVector wd) {
+	private boolean classify(FeatureVector<? extends Number> wd) {
 		float sum = 0;
 		// Scalar Product
 		for (int i = 0; i!=this.getDimensionality(); ++i) {
-			sum += wd.getValue(i) * this.getValue(i); 
+			sum += wd.getValue(i).doubleValue() * this.getValue(i); 
 		}
 		
 		// sign binary function
@@ -63,19 +68,8 @@ public class FeatureVector implements Vector<Integer>{
 				+ ", localitySensitiveHashed=" + getLocalitySensitiveHashed()
 				+ "]";
 	}
-
-	public SignatureVector permute(int[] randomPermutation) {
-		SignatureVector permutation = new SignatureVector(this,
-				this.getLocalitySensitiveHashed().getDimensionality());
-		int i = 0;
-		for (int position : randomPermutation) {
-			permutation.setValue(i,
-					this.getLocalitySensitiveHashed().getValue(position));
-			i++;
-		}
-		return permutation;
-	}
 	
+	@Override
 	public Integer getId() {
 		return id;
 	}
@@ -85,7 +79,7 @@ public class FeatureVector implements Vector<Integer>{
 	}
 
 	@Override
-	public List<Integer> getValues() {
+	public List<Double> getValues() {
 		return features;
 	}
 
@@ -95,20 +89,17 @@ public class FeatureVector implements Vector<Integer>{
 	}
 	
 	@Override
-	public void setValue(Integer dimension, Integer value) {
+	public void setValue(Integer dimension, Double value) {
 		this.features.add(dimension, value);
 	}
 	
 	@Override
-	public Integer getValue(Integer dimension) {
+	public Double getValue(Integer dimension) {
 		return this.features.get(dimension);
 	}
-
+	
+	@Override
 	public SignatureVector getLocalitySensitiveHashed() {
 		return localitySensitiveHashed;
-	}
-
-	public void setLocalitySensitiveHashed(SignatureVector localitySensitiveHashed) {
-		this.localitySensitiveHashed = localitySensitiveHashed;
 	}
 }
