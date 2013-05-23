@@ -23,8 +23,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.DoubleListFeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.IntegerListFeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
 
 public class LSH {
 
@@ -89,7 +88,7 @@ public class LSH {
 
 		}
 		logger.trace("all classification workers finished");
-		
+
 		// step 4
 		logger.trace("started creation of random permutations");
 		Map<int[], TreeBag> randomPermutations = new HashMap<int[], TreeBag>();
@@ -111,23 +110,24 @@ public class LSH {
 			SignatureVector searchVectorPermutation = searchVector
 					.getLocalitySensitiveHashed().permute(randomPermutation);
 			sortedPermutationList.add(searchVectorPermutation);
-			
+
 			for (FeatureVector<? extends Number> inputVector : inputVectors) {
-				sortedPermutationList.add(inputVector.getLocalitySensitiveHashed()
+				sortedPermutationList.add(inputVector
+						.getLocalitySensitiveHashed()
 						.permute(randomPermutation));
 			}
 			SignatureVector[] sortedPermutationArray = new ComparableBitSetSignatureVector[sortedPermutationList
 					.size()];
 			sortedPermutationList.toArray(sortedPermutationArray);
-			
+
 			// try to optimize gc
 			sortedPermutationList = null;
-			
+
 			int searchVectorsSignaturePosition = Arrays.binarySearch(
 					sortedPermutationArray, searchVectorPermutation);
-			int i = searchVectorsSignaturePosition - WINDOW_SIZE_B/2;
+			int i = searchVectorsSignaturePosition - WINDOW_SIZE_B / 2;
 			i = i < 0 ? i = 0 : i;
-			for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B/2
+			for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B / 2
 					&& i < sortedPermutationArray.length; i++) {
 				SignatureVector candidate = sortedPermutationArray[i];
 				Float candidatesHammingDistances = candidates.get(candidate);
@@ -165,7 +165,7 @@ public class LSH {
 		for (int di = 0; di < numberOfRandomVectors; di++) {
 			// Randomly generate a weight vector of random normal mean 0 and
 			// variance 1 weights.
-			FeatureVector<Double> dI = new DoubleListFeatureVector();
+			FeatureVector<Double> dI = new NumberListFeatureVector<Double>();
 			for (int ki = 0; ki < dimensionality; ki++) {
 				dI.setValue(ki, rnd.nextGaussian());
 			}
@@ -182,12 +182,13 @@ public class LSH {
 		for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 			zeroFeatureValues[j] = 1;
 		}
-		FeatureVector<? extends Number> searchVector = new IntegerListFeatureVector(-1, zeroFeatureValues);
+		FeatureVector<? extends Number> searchVector = new NumberListFeatureVector<Integer>(
+				-1, zeroFeatureValues);
 		Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 		for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 			closeValueFeatureValues[j] = j % 5 + 1;
 		}
-		FeatureVector<? extends Number> closeValueFeatureVector = new IntegerListFeatureVector(
+		FeatureVector<? extends Number> closeValueFeatureVector = new NumberListFeatureVector<Integer>(
 				inputVectors.size(), closeValueFeatureValues);
 		inputVectors.add(closeValueFeatureVector);
 
@@ -196,13 +197,13 @@ public class LSH {
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 				randomFeatureValues[j] = rnd.nextInt() % 100;
 			}
-			FeatureVector<? extends Number> randomFeatureVector = new IntegerListFeatureVector(
+			FeatureVector<? extends Number> randomFeatureVector = new NumberListFeatureVector<Integer>(
 					inputVectors.size(), randomFeatureValues);
 			inputVectors.add(randomFeatureVector);
 		}
 
-		for (Pair<Float, FeatureVector<? extends Number>> match : LSH.computeNeighbours(
-				searchVector, inputVectors, 0.2f)) {
+		for (Pair<Float, FeatureVector<? extends Number>> match : LSH
+				.computeNeighbours(searchVector, inputVectors, 0.2f)) {
 			logger.info(match);
 		}
 	}

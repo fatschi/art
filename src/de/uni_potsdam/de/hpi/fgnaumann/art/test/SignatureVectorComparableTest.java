@@ -15,16 +15,26 @@ public class SignatureVectorComparableTest {
 
 	@Test
 	public void testRightOrderingOfSignatureVectors() {
-		ComparableBitSetSignatureVector foo1 = new ComparableBitSetSignatureVector(null, 5);
-		ComparableBitSetSignatureVector foo2 = new ComparableBitSetSignatureVector(null, 5);
-		ComparableBitSetSignatureVector foo3 = new ComparableBitSetSignatureVector(null, 5);
-		ComparableBitSetSignatureVector foo4 = new ComparableBitSetSignatureVector(null, 5);
-		ComparableBitSetSignatureVector foo5 = new ComparableBitSetSignatureVector(null, 5);
-		ComparableBitSetSignatureVector foo6 = new ComparableBitSetSignatureVector(null, 5);
-		ComparableBitSetSignatureVector foo7 = new ComparableBitSetSignatureVector(null, 5);
-		foo7.setValue(1, new Bit(true));foo7.setValue(2, new Bit(true));foo7.setValue(3, new Bit(true));foo7.setValue(4, new Bit(true));foo7.setValue(5, new Bit(true));
-		
-		
+		ComparableBitSetSignatureVector foo1 = new ComparableBitSetSignatureVector(
+				null, 5);
+		ComparableBitSetSignatureVector foo2 = new ComparableBitSetSignatureVector(
+				null, 5);
+		ComparableBitSetSignatureVector foo3 = new ComparableBitSetSignatureVector(
+				null, 5);
+		ComparableBitSetSignatureVector foo4 = new ComparableBitSetSignatureVector(
+				null, 5);
+		ComparableBitSetSignatureVector foo5 = new ComparableBitSetSignatureVector(
+				null, 5);
+		ComparableBitSetSignatureVector foo6 = new ComparableBitSetSignatureVector(
+				null, 5);
+		ComparableBitSetSignatureVector foo7 = new ComparableBitSetSignatureVector(
+				null, 5);
+		foo7.setValue(1, new Bit(true));
+		foo7.setValue(2, new Bit(true));
+		foo7.setValue(3, new Bit(true));
+		foo7.setValue(4, new Bit(true));
+		foo7.setValue(5, new Bit(true));
+
 		foo1.setValue(1, new Bit(true));
 		foo1.setValue(2, new Bit(true));
 		foo2.setValue(2, new Bit(true));
@@ -32,7 +42,7 @@ public class SignatureVectorComparableTest {
 		foo3.setValue(2, new Bit(true));
 		foo4.setValue(4, new Bit(true));
 		foo5.setValue(5, new Bit(true));
-		
+
 		List<ComparableBitSetSignatureVector> sortedList = new ArrayList<ComparableBitSetSignatureVector>();
 		sortedList.add(foo4);
 		sortedList.add(foo3);
@@ -41,7 +51,7 @@ public class SignatureVectorComparableTest {
 		sortedList.add(foo1);
 		sortedList.add(foo7);
 		sortedList.add(foo6);
-		
+
 		Collections.sort(sortedList);
 		List<ComparableBitSetSignatureVector> assertedList = new ArrayList<ComparableBitSetSignatureVector>();
 		assertedList.add(foo7);
@@ -52,8 +62,7 @@ public class SignatureVectorComparableTest {
 		assertedList.add(foo5);
 		assertedList.add(foo6);
 		assertEquals(sortedList, assertedList);
-		
-		
+
 	}
 
 }

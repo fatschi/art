@@ -1,7 +1,7 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.util;
 
-public class Bit extends Number{
-	
+public class Bit extends Number {
+
 	private static final long serialVersionUID = 8544897788145391434L;
 	boolean state = false;
 
