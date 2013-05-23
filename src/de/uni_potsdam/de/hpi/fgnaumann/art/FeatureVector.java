@@ -16,6 +16,11 @@ public class FeatureVector implements Vector<Integer>{
 		}
 	}
 	
+	public FeatureVector(Integer id, Integer... features){
+		this(features);
+		this.id = id;
+	}
+	
 	/**
 	 * Create a bit signature using d classification steps. 
 	 * @param d - the input random weight vector of counts.
