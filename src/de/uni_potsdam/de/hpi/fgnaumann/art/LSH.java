@@ -1,7 +1,6 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,10 +8,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import org.apache.commons.collections.bag.TreeBag;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -21,8 +22,6 @@ import org.apache.logging.log4j.Logger;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
 
 public class LSH {
@@ -43,20 +42,20 @@ public class LSH {
 
 	private static Random rnd = new Random();
 
-	public static List<Pair<Float, FeatureVector<? extends Number>>> computeNeighbours(
+	public static List<Pair<Double, FeatureVector<? extends Number>>> computeNeighbours(
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
-			float maxDistance) {
+			double maxDistance) {
 		inputVectors.add(searchVector);
 		// step 2
 		logger.trace("starting generation of random vectors");
 		Set<FeatureVector<? extends Number>> randomVectors = generateRandomWeightVectors(
 				NUMBER_OF_RANDOM_VECTORS_d, searchVector.getDimensionality());
 		logger.trace("finished generation of random vectors");
+		
+		//step 3
+		ExecutorService classifierExecutor = Executors.newFixedThreadPool(NTHREADS);
 
-		logger.trace("setting up executor for classification");
-		ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
-
-		logger.trace("starting assignment of workers to executor");
+		logger.trace("starting assignment of classifier workers to executor");
 		int chunkSize = 0;
 		Set<FeatureVector<? extends Number>> tempSet = new HashSet<FeatureVector<? extends Number>>();
 		int chunkCount = 0;
@@ -66,7 +65,7 @@ public class LSH {
 				chunkSize++;
 			} else {
 				Runnable worker = new ClassifierWorker(tempSet, randomVectors);
-				executor.execute(worker);
+				classifierExecutor.execute(worker);
 				tempSet = new HashSet<FeatureVector<? extends Number>>();
 				chunkSize = 0;
 				chunkCount++;
@@ -77,78 +76,59 @@ public class LSH {
 
 		if (tempSet.size() > 0) {
 			Runnable worker = new ClassifierWorker(tempSet, randomVectors);
-			executor.execute(worker);
+			classifierExecutor.execute(worker);
 			chunkCount++;
 		}
 
 		logger.trace("finished assignment of %d %s chunks to executor",
 				chunkCount, (chunkCount > 1 ? "workers" : "worker"));
-		executor.shutdown();
-		while (!executor.isTerminated()) {
+		classifierExecutor.shutdown();
+		while (!classifierExecutor.isTerminated()) {
 
 		}
 		logger.trace("all classification workers finished");
 
 		// step 4
 		logger.trace("started creation of random permutations");
-		Map<int[], TreeBag> randomPermutations = new HashMap<int[], TreeBag>();
+		Set<int[]> randomPermutations = new HashSet<int[]>();
 		PermutationGenerator permutationGenerator = new FisherYates();
 		for (int i = 0; i < NUMBER_OF_PERMUTATIONS_q; i++) {
-			randomPermutations.put(permutationGenerator
-					.generateRandomPermutation(NUMBER_OF_RANDOM_VECTORS_d),
-					new TreeBag());
+			randomPermutations.add(permutationGenerator
+					.generateRandomPermutation(NUMBER_OF_RANDOM_VECTORS_d));
 		}
 		logger.trace("finished creation of random permutations");
 
-		logger.trace("started random permutations and sorting with neighbour lookup");
-		Map<FeatureVector<? extends Number>, Float> candidates = new HashMap<FeatureVector<? extends Number>, Float>();
+		logger.trace("starting assignment of permutation workers to executor");
+		Map<FeatureVector<? extends Number>, Double> candidates = new HashMap<FeatureVector<? extends Number>, Double>();
 
-		for (int[] randomPermutation : randomPermutations.keySet()) {
-			TreeBag sortedPermutationList = randomPermutations
-					.get(randomPermutation);
-
-			SignatureVector searchVectorPermutation = searchVector
-					.getLocalitySensitiveHashed().permute(randomPermutation);
-			sortedPermutationList.add(searchVectorPermutation);
-
-			for (FeatureVector<? extends Number> inputVector : inputVectors) {
-				sortedPermutationList.add(inputVector
-						.getLocalitySensitiveHashed()
-						.permute(randomPermutation));
-			}
-			SignatureVector[] sortedPermutationArray = new ComparableBitSetSignatureVector[sortedPermutationList
-					.size()];
-			sortedPermutationList.toArray(sortedPermutationArray);
-
-			// try to optimize gc
-			sortedPermutationList = null;
-
-			int searchVectorsSignaturePosition = Arrays.binarySearch(
-					sortedPermutationArray, searchVectorPermutation);
-			int i = searchVectorsSignaturePosition - WINDOW_SIZE_B / 2;
-			i = i < 0 ? i = 0 : i;
-			for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B / 2
-					&& i < sortedPermutationArray.length; i++) {
-				SignatureVector candidate = sortedPermutationArray[i];
-				Float candidatesHammingDistances = candidates.get(candidate);
-				if (candidatesHammingDistances != null) {
-					break;
-				}
-				candidatesHammingDistances = searchVectorPermutation
-						.computeNormalizedHammingDistance(candidate);
-				candidates.put(candidate.getParentVector(),
-						candidatesHammingDistances);
-			}
+		ExecutorService pemutationExecutor = Executors.newFixedThreadPool(NTHREADS);
+	    List<Future<Map<FeatureVector<? extends Number>, Double>>> list = new ArrayList<Future<Map<FeatureVector<? extends Number>, Double>>>();
+		
+		for (int[] randomPermutation : randomPermutations) {
+		      Callable<Map<FeatureVector<? extends Number>, Double>> worker = new PermutationWorker(randomPermutation, searchVector, inputVectors, WINDOW_SIZE_B);
+		      Future<Map<FeatureVector<? extends Number>, Double>> submit = pemutationExecutor.submit(worker);
+		      list.add(submit);
 		}
-		logger.trace("finished random permutations and sorting with neighbour lookup");
+		logger.trace("finished assignment of %d %s permutation workers to executor",
+				randomPermutations.size(), (randomPermutations.size() > 1 ? "workers" : "worker"));
+		
+		for (Future<Map<FeatureVector<? extends Number>, Double>> future : list) {
+		      try {
+		        candidates.putAll(future.get());
+		      } catch (InterruptedException e) {
+		        e.printStackTrace();
+		      } catch (ExecutionException e) {
+		        e.printStackTrace();
+		      }
+		    }
 
 		logger.trace("started filtering of neighbours by threshold");
-		List<Pair<Float, FeatureVector<? extends Number>>> resultList = new ArrayList<Pair<Float, FeatureVector<? extends Number>>>();
-		for (Entry<FeatureVector<? extends Number>, Float> hammingDistances : candidates
+		List<Pair<Double, FeatureVector<? extends Number>>> resultList = new ArrayList<Pair<Double, FeatureVector<? extends Number>>>();
+		for (Entry<FeatureVector<? extends Number>, Double> hammingDistances : candidates
 				.entrySet()) {
 			if (hammingDistances.getValue() <= maxDistance) {
 				resultList
-						.add(new ImmutablePair<Float, FeatureVector<? extends Number>>(
+						.add(new ImmutablePair<Double, FeatureVector<? extends Number>>(
 								hammingDistances.getValue(), hammingDistances
 										.getKey()));
 			}
@@ -202,8 +182,8 @@ public class LSH {
 			inputVectors.add(randomFeatureVector);
 		}
 
-		for (Pair<Float, FeatureVector<? extends Number>> match : LSH
-				.computeNeighbours(searchVector, inputVectors, 0.2f)) {
+		for (Pair<Double, FeatureVector<? extends Number>> match : LSH
+				.computeNeighbours(searchVector, inputVectors, 0.2d)) {
 			logger.info(match);
 		}
 	}

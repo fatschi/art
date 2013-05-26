@@ -6,7 +6,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 
 public interface SignatureVector extends Vector<Bit> {
 
-	Float computeNormalizedHammingDistance(SignatureVector secondVector);
+	Double computeNormalizedHammingDistance(SignatureVector secondVector);
 
 	SignatureVector permute(int[] randomPermutation);
 

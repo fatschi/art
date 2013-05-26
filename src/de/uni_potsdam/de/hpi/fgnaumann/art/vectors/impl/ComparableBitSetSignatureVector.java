@@ -68,10 +68,10 @@ public class ComparableBitSetSignatureVector implements SignatureVector,
 	}
 
 	@Override
-	public Float computeNormalizedHammingDistance(SignatureVector secondVector) {
+	public Double computeNormalizedHammingDistance(SignatureVector secondVector) {
 		BitSet foo1 = (BitSet) this.values.clone();
 		foo1.xor(secondVector.getValuesAsBitSet());
-		return (foo1.cardinality() / (float) this.getDimensionality());
+		return (foo1.cardinality() / (double) this.getDimensionality());
 	}
 
 	@Override
