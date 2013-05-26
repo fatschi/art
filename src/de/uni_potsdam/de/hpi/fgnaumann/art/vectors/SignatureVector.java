@@ -4,7 +4,7 @@ import java.util.BitSet;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 
-public interface SignatureVector extends Vector<Bit> {
+public interface SignatureVector extends Vector<Bit>, Comparable<SignatureVector> {
 
 	Double computeNormalizedHammingDistance(SignatureVector secondVector);
 

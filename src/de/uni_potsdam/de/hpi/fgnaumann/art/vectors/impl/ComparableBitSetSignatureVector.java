@@ -9,8 +9,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.util.ComparableBitSet;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 
-public class ComparableBitSetSignatureVector implements SignatureVector,
-		Comparable<ComparableBitSetSignatureVector> {
+public class ComparableBitSetSignatureVector implements SignatureVector {
 
 	protected ComparableBitSet values;
 
@@ -55,8 +54,46 @@ public class ComparableBitSetSignatureVector implements SignatureVector,
 	}
 
 	@Override
-	public int compareTo(ComparableBitSetSignatureVector toComp) {
-		return this.values.compareTo(toComp.values);
+	public int compareTo(SignatureVector toComp) {
+		return this.values.compareTo(toComp.getValuesAsBitSet());
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((parentVector == null) ? 0 : parentVector.hashCode());
+		result = prime * result + ((size == null) ? 0 : size.hashCode());
+		result = prime * result + ((values == null) ? 0 : values.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ComparableBitSetSignatureVector other = (ComparableBitSetSignatureVector) obj;
+		if (parentVector == null) {
+			if (other.parentVector != null)
+				return false;
+		} else if (!parentVector.equals(other.parentVector))
+			return false;
+		if (size == null) {
+			if (other.size != null)
+				return false;
+		} else if (!size.equals(other.size))
+			return false;
+		if (values == null) {
+			if (other.values != null)
+				return false;
+		} else if (!values.equals(other.values))
+			return false;
+		return true;
 	}
 
 	@Override
@@ -75,7 +112,7 @@ public class ComparableBitSetSignatureVector implements SignatureVector,
 	}
 
 	@Override
-	public SignatureVector permute(int[] randomPermutation) {
+	synchronized public SignatureVector permute(int[] randomPermutation) {
 		SignatureVector permutation = new ComparableBitSetSignatureVector(
 				this.parentVector, this.getDimensionality());
 		int i = 0;

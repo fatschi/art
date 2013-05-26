@@ -51,9 +51,10 @@ public class LSH {
 		Set<FeatureVector<? extends Number>> randomVectors = generateRandomWeightVectors(
 				NUMBER_OF_RANDOM_VECTORS_d, searchVector.getDimensionality());
 		logger.trace("finished generation of random vectors");
-		
-		//step 3
-		ExecutorService classifierExecutor = Executors.newFixedThreadPool(NTHREADS);
+
+		// step 3
+		ExecutorService classifierExecutor = Executors
+				.newFixedThreadPool(NTHREADS);
 
 		logger.trace("starting assignment of classifier workers to executor");
 		int chunkSize = 0;
@@ -101,26 +102,33 @@ public class LSH {
 		logger.trace("starting assignment of permutation workers to executor");
 		Map<FeatureVector<? extends Number>, Double> candidates = new HashMap<FeatureVector<? extends Number>, Double>();
 
-		ExecutorService pemutationExecutor = Executors.newFixedThreadPool(NTHREADS);
-	    List<Future<Map<FeatureVector<? extends Number>, Double>>> list = new ArrayList<Future<Map<FeatureVector<? extends Number>, Double>>>();
-		
+		ExecutorService pemutationExecutor = Executors
+				.newFixedThreadPool(NTHREADS);
+		List<Future<Map<FeatureVector<? extends Number>, Double>>> list = new ArrayList<Future<Map<FeatureVector<? extends Number>, Double>>>();
+
 		for (int[] randomPermutation : randomPermutations) {
-		      Callable<Map<FeatureVector<? extends Number>, Double>> worker = new PermutationWorker(randomPermutation, searchVector, inputVectors, WINDOW_SIZE_B);
-		      Future<Map<FeatureVector<? extends Number>, Double>> submit = pemutationExecutor.submit(worker);
-		      list.add(submit);
+			Callable<Map<FeatureVector<? extends Number>, Double>> worker = new PermutationWorker(
+					randomPermutation, searchVector, inputVectors,
+					WINDOW_SIZE_B);
+			Future<Map<FeatureVector<? extends Number>, Double>> submit = pemutationExecutor
+					.submit(worker);
+			list.add(submit);
 		}
-		logger.trace("finished assignment of %d %s permutation workers to executor",
-				randomPermutations.size(), (randomPermutations.size() > 1 ? "workers" : "worker"));
-		
+		logger.trace(
+				"finished assignment of %d %s permutation workers to executor",
+				randomPermutations.size(),
+				(randomPermutations.size() > 1 ? "workers" : "worker"));
+
 		for (Future<Map<FeatureVector<? extends Number>, Double>> future : list) {
-		      try {
-		        candidates.putAll(future.get());
-		      } catch (InterruptedException e) {
-		        e.printStackTrace();
-		      } catch (ExecutionException e) {
-		        e.printStackTrace();
-		      }
-		    }
+			try {
+				candidates.putAll(future.get());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+		pemutationExecutor.shutdown();
 
 		logger.trace("started filtering of neighbours by threshold");
 		List<Pair<Double, FeatureVector<? extends Number>>> resultList = new ArrayList<Pair<Double, FeatureVector<? extends Number>>>();
