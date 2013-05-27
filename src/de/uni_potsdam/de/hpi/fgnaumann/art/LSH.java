@@ -40,14 +40,14 @@ public class LSH {
 	private static double SIMILARITY_THRESHOLD = 0.05d;
 	private static int CORES = Runtime.getRuntime().availableProcessors();
 	private static int NTHREADS = CORES;
-	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 10;
+	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
 	private static int NUMBER_OF_RANDOM_VECTORS_d = 100;
-	private static int NUMBER_OF_PERMUTATIONS_q = 10;
+	private static int NUMBER_OF_PERMUTATIONS_q = 100000;
 	private static int WINDOW_SIZE_B = 50;
 
 	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
-	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
+	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 20;
 	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
 	private static int SIMULATION_VECTOR_VALUE_SPACE = 1000;
 

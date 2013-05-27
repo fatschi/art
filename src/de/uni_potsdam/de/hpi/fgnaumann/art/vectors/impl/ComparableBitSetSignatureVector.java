@@ -125,10 +125,12 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 
 	@Override
 	public int compareTo(SignatureVector o) {
-		
-		if(this.values.compareTo(o.getValuesAsBitSet())==0){
-			return this.parentVector.getId().compareTo(o.getParentVector().getId());
-		}else return this.values.compareTo(o.getValuesAsBitSet());
+
+		if (this.values.compareTo(o.getValuesAsBitSet()) == 0) {
+			return this.parentVector.getId().compareTo(
+					o.getParentVector().getId());
+		} else
+			return this.values.compareTo(o.getValuesAsBitSet());
 	}
 
 }
