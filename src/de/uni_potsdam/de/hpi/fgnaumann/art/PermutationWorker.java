@@ -57,8 +57,11 @@ public class PermutationWorker implements
 		for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B / 2
 				&& i < sortedPermutationArray.length; i++) {
 			SignatureVector candidate = sortedPermutationArray[i];
-			outputMap.put(candidate.getParentVector(), searchVectorPermutation
-					.computeNormalizedHammingDistance(candidate));
+			if (candidate.getParentVector() != searchVector) {
+				outputMap.put(candidate.getParentVector(),
+						searchVectorPermutation
+								.computeNormalizedHammingDistance(candidate));
+			}
 		}
 		return outputMap;
 	}

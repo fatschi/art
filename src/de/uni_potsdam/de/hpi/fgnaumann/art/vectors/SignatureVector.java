@@ -1,10 +1,9 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.vectors;
 
-import java.util.BitSet;
-
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
+import de.uni_potsdam.de.hpi.fgnaumann.art.util.ComparableBitSet;
 
-public interface SignatureVector extends Vector<Bit>, Comparable<SignatureVector> {
+public interface SignatureVector extends Vector<Bit>, Comparable<SignatureVector>{
 
 	Double computeNormalizedHammingDistance(SignatureVector secondVector);
 
@@ -12,6 +11,6 @@ public interface SignatureVector extends Vector<Bit>, Comparable<SignatureVector
 
 	FeatureVector<? extends Number> getParentVector();
 
-	BitSet getValuesAsBitSet();
+	ComparableBitSet getValuesAsBitSet();
 
 }

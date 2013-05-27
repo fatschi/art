@@ -14,6 +14,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -29,16 +37,19 @@ public class LSH {
 	private static Logger logger = LogManager.getFormatterLogger(LSH.class
 			.getName());
 
-	private static final int CORES = Runtime.getRuntime().availableProcessors();
-	private static final int NTHREADS = CORES * 2;
-	private static final int CHUNK_SIZE_CLASSIFIER_WORKER = 10;
+	private static double SIMILARITY_THRESHOLD = 0.05d;
+	private static int CORES = Runtime.getRuntime().availableProcessors();
+	private static int NTHREADS = CORES;
+	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 10;
 
-	private static final int NUMBER_OF_RANDOM_VECTORS_d = 100;
-	private static final int NUMBER_OF_PERMUTATIONS_q = 10000;
-	private static final int WINDOW_SIZE_B = 50;
+	private static int NUMBER_OF_RANDOM_VECTORS_d = 100;
+	private static int NUMBER_OF_PERMUTATIONS_q = 10;
+	private static int WINDOW_SIZE_B = 50;
 
-	private static final int NUMBER_OF_SIMULATION_VECTORS = 998;
-	private static final int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
+	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
+	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
+	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
+	private static int SIMULATION_VECTOR_VALUE_SPACE = 1000;
 
 	private static Random rnd = new Random();
 
@@ -164,35 +175,135 @@ public class LSH {
 
 	public static void main(String args[]) {
 
-		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<?>>();
+		// create Options object
+		Options options = createOptions();
+		// create the parser
+		CommandLineParser parser = new PosixParser();
+		try {
+			// parse the command line arguments
+			CommandLine line = parser.parse(options, args);
+			if (line.hasOption("help")) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp("LSH", options);
+			}
+			evaluateCLIParameters(line);
+		} catch (ParseException exp) {
+			// oops, something went wrong
+			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
+		}
 
-		Integer[] zeroFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
+		Integer[] searchVectorValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 		for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-			zeroFeatureValues[j] = 1;
+			searchVectorValues[j] = rnd.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 		}
 		FeatureVector<? extends Number> searchVector = new NumberListFeatureVector<Integer>(
-				-1, zeroFeatureValues);
-		Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
-		for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-			closeValueFeatureValues[j] = j % 5 + 1;
+				-1, searchVectorValues);
+
+		Set<FeatureVector<? extends Number>> inputVectors = generateSimulationVectors(searchVectorValues);
+		;
+
+		for (Pair<Double, FeatureVector<? extends Number>> match : LSH
+				.computeNeighbours(searchVector, inputVectors,
+						SIMILARITY_THRESHOLD)) {
+			logger.info(match);
 		}
-		FeatureVector<? extends Number> closeValueFeatureVector = new NumberListFeatureVector<Integer>(
-				inputVectors.size(), closeValueFeatureValues);
-		inputVectors.add(closeValueFeatureVector);
+	}
+
+	private static void evaluateCLIParameters(CommandLine line) {
+		if (line.hasOption("threshold")) {
+			// initialise the member variable
+			SIMILARITY_THRESHOLD = Double.parseDouble(line
+					.getOptionValue("threshold"));
+		}
+		// TODO
+
+	}
+
+	@SuppressWarnings("static-access")
+	private static Options createOptions() {
+		Options cliOptions = new Options();
+
+		Option threshold = OptionBuilder.withArgName("threshold").hasArg()
+				.withDescription("the maximum hamming distance")
+				.create("threshold");
+
+		Option threads = OptionBuilder.withArgName("threads").hasArg()
+				.withDescription("the number of threads to spawn")
+				.create("NTHREADS");
+
+		Option chunkSize = OptionBuilder
+				.withArgName("chunk")
+				.hasArg()
+				.withDescription(
+						"chunk size of the vectors classified in one thread")
+				.create("chunkSize");
+
+		Option d = OptionBuilder.withArgName("d").hasArg()
+				.withDescription("number of random vectors").create("d");
+
+		Option q = OptionBuilder.withArgName("q").hasArg()
+				.withDescription("number of random permutations").create("q");
+
+		Option B = OptionBuilder.withArgName("B").hasArg()
+				.withDescription("window size").create("B");
+
+		Option numberOfSimulationVectors = OptionBuilder
+				.withArgName("numberOfSimulationVectors")
+				.hasArg()
+				.withDescription(
+						"number of vectors to be generated for test simulation")
+				.create("numberOfSimulationVectors");
+
+		Option numberOfSimulationVectorsClose = OptionBuilder
+				.withArgName("numberOfSimulationVectorsClose")
+				.hasArg()
+				.withDescription(
+						"number of vectors to be generated for test simulation that are close to the search vector")
+				.create("numberOfSimulationVectorsClose");
+
+		Option dimensionalityOfSimulationVectors = OptionBuilder
+				.withArgName("dimensionalityOfSimulationVectors")
+				.hasArg()
+				.withDescription(
+						"the dimensionality of the search/input vector generated in the simulation")
+				.create("dimensionalityOfSimulationVectors");
+		
+		Option help = new Option( "help", "print this message" );
+
+		return cliOptions.addOption(dimensionalityOfSimulationVectors)
+				.addOption(numberOfSimulationVectorsClose)
+				.addOption(numberOfSimulationVectors).addOption(B).addOption(q)
+				.addOption(d).addOption(chunkSize).addOption(threads)
+				.addOption(threshold).addOption(help);
+
+	}
+
+	private static Set<FeatureVector<? extends Number>> generateSimulationVectors(
+			Integer[] searchVectorValues) {
+		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
+		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
+			Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
+			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
+				int variance = (int) (SIMULATION_VECTOR_VALUE_SPACE / 10);
+				closeValueFeatureValues[j] = searchVectorValues[j]
+						- rnd.nextInt(variance) + rnd.nextInt(variance);
+
+			}
+			FeatureVector<? extends Number> closeValueFeatureVector = new NumberListFeatureVector<Integer>(
+					inputVectors.size(), closeValueFeatureValues);
+			inputVectors.add(closeValueFeatureVector);
+		}
 
 		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS; i++) {
 			Integer[] randomFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-				randomFeatureValues[j] = rnd.nextInt() % 100;
+				randomFeatureValues[j] = rnd
+						.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 			}
 			FeatureVector<? extends Number> randomFeatureVector = new NumberListFeatureVector<Integer>(
 					inputVectors.size(), randomFeatureValues);
 			inputVectors.add(randomFeatureVector);
 		}
-
-		for (Pair<Double, FeatureVector<? extends Number>> match : LSH
-				.computeNeighbours(searchVector, inputVectors, 0.2d)) {
-			logger.info(match);
-		}
+		return inputVectors;
 	}
 }

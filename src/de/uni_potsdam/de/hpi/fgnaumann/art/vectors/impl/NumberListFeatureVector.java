@@ -26,6 +26,45 @@ public class NumberListFeatureVector<T extends Number> implements
 		this.id = id;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((features == null) ? 0 : features.hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		@SuppressWarnings("unchecked")
+		NumberListFeatureVector<? extends Number> other = (NumberListFeatureVector<? extends Number>) obj;
+		if (features == null) {
+			if (other.features != null)
+				return false;
+		} else if (!features.equals(other.features))
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (localitySensitiveHashed == null) {
+			if (other.localitySensitiveHashed != null)
+				return false;
+		} else if (!localitySensitiveHashed
+				.equals(other.localitySensitiveHashed))
+			return false;
+		return true;
+	}
+
 	/**
 	 * Create a bit signature using d classification steps.
 	 * 

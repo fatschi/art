@@ -11,6 +11,7 @@ import org.junit.Test;
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVectorComparator;
 
 public class SignatureVectorTest {
 
@@ -71,7 +72,7 @@ public class SignatureVectorTest {
 		sortedList.add(foo7);
 		sortedList.add(foo6);
 
-		Collections.sort(sortedList);
+		Collections.sort(sortedList, new ComparableBitSetSignatureVectorComparator());
 		List<SignatureVector> assertedList = new ArrayList<SignatureVector>();
 		assertedList.add(foo7);
 		assertedList.add(foo1);

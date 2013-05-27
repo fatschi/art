@@ -54,11 +54,6 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	}
 
 	@Override
-	public int compareTo(SignatureVector toComp) {
-		return this.values.compareTo(toComp.getValuesAsBitSet());
-	}
-
-	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -112,7 +107,7 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	}
 
 	@Override
-	synchronized public SignatureVector permute(int[] randomPermutation) {
+	public SignatureVector permute(int[] randomPermutation) {
 		SignatureVector permutation = new ComparableBitSetSignatureVector(
 				this.parentVector, this.getDimensionality());
 		int i = 0;
@@ -124,8 +119,16 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	}
 
 	@Override
-	public BitSet getValuesAsBitSet() {
+	public ComparableBitSet getValuesAsBitSet() {
 		return this.values;
+	}
+
+	@Override
+	public int compareTo(SignatureVector o) {
+		
+		if(this.values.compareTo(o.getValuesAsBitSet())==0){
+			return this.parentVector.getId().compareTo(o.getParentVector().getId());
+		}else return this.values.compareTo(o.getValuesAsBitSet());
 	}
 
 }
