@@ -52,6 +52,7 @@ public class RandomProjection {
 	 *         R with entries in {−1, 0, 1} with probabilities { 1/6 , 2/3 ,
 	 *         1/6 }, TODO implements and test sparse projection.
 	 */
+	@SuppressWarnings("unused")
 	private float sparseDrawNormal(double mean, double variance) {
 		return (float) (mean + rnd.nextGaussian() * variance);
 	}

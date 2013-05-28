@@ -9,11 +9,14 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 
 public class NumberListFeatureVector<T extends Number> implements
-		FeatureVector<T> {
+		FeatureVector<T>{
+	private static final long serialVersionUID = -583575794565479250L;
+	
 	private Integer id;
 	private List<T> features;
 	private SignatureVector localitySensitiveHashed;
 
+	@SafeVarargs
 	public NumberListFeatureVector(T... features) {
 		this.features = new ArrayList<T>();
 		for (T feature : features) {
@@ -21,6 +24,7 @@ public class NumberListFeatureVector<T extends Number> implements
 		}
 	}
 
+	@SafeVarargs
 	public NumberListFeatureVector(Integer id, T... features) {
 		this(features);
 		this.id = id;
@@ -110,8 +114,8 @@ public class NumberListFeatureVector<T extends Number> implements
 
 	@Override
 	public String toString() {
-		return "FeatureVector [id=" + id + ", localitySensitiveHashed="
-				+ getLocalitySensitiveHashed() + ", features=" + features + "]";
+		return ("FeatureVector [id=" + id + ", localitySensitiveHashed="
+				+ getLocalitySensitiveHashed() + ", features=" + features + "]");
 	}
 
 	@Override

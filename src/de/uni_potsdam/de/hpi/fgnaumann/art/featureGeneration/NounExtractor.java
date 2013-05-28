@@ -57,6 +57,7 @@ public class NounExtractor {
 	 * @throws IOException
 	 */
 	public NounExtractor(BufferedReader bufr) throws IOException {
+		@SuppressWarnings("unused")
 		Tagger tagger = new Tagger("lib/english");
 		BR = bufr;
 	}
@@ -156,6 +157,7 @@ public class NounExtractor {
 	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unused")
 	private static void fulltextTest() throws FileNotFoundException,
 			UnsupportedEncodingException, IOException {
 		// Fulltext Test
@@ -228,6 +230,7 @@ public class NounExtractor {
 				oneLongString.delete(0, oneLongString.length());
 			}
 		}
+		br.close();
 
 		// OUTPUT
 		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
