@@ -2,8 +2,11 @@ package de.uni_potsdam.de.hpi.fgnaumann.art;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -32,20 +35,20 @@ public class LSHRunner {
 	private static Logger logger = LogManager
 			.getFormatterLogger(LSHRunner.class.getName());
 
-	private static double SIMILARITY_THRESHOLD = 0.1d;
+	private static double SIMILARITY_THRESHOLD = 0.05d;
 	private static int CORES = Runtime.getRuntime().availableProcessors();
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
-	private static int NUMBER_OF_RANDOM_VECTORS_d = 100;
-	private static int NUMBER_OF_PERMUTATIONS_q = 10;
-	private static int WINDOW_SIZE_B = 50;
+	private static int NUMBER_OF_RANDOM_VECTORS_d = 1000;
+	private static int NUMBER_OF_PERMUTATIONS_q = 100;
+	private static int WINDOW_SIZE_B = 10000;
 
 	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
-	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 50;
+	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
 	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
 	private static int SIMULATION_VECTOR_VALUE_SPACE = 1000;
-	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.1;
+	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.15;
 
 	private static Random rnd = new Random();
 
@@ -239,7 +242,7 @@ public class LSHRunner {
 					searchVectorValues);
 
 			inputVectors = generateSimulationVectors(searchVectorValues);
-			/*if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= 1000 * 20000) {
+			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= 1000 * 20000) {
 				try {
 					FileOutputStream fos;
 					fos = new FileOutputStream((new Date()).toString() + "_dim"
@@ -257,7 +260,7 @@ public class LSHRunner {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}*/
+			}
 			logger.trace("simulation started - finished generation of random feature vectors");
 		}
 
@@ -271,9 +274,26 @@ public class LSHRunner {
 		for (Pair<Double, FeatureVector<? extends Number>> match : neighbours) {
 			logger.info(match.getValue().getId() + " : " + match.getKey());
 		}
+		
+		Set<Integer> remaining = new HashSet<Integer>();
+		for(Integer i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++){
+			remaining.add(i);
+		}
+		Set<Integer> falsePositives = new HashSet<Integer>();
+		
+		for (Pair<Double, FeatureVector<? extends Number>> match : neighbours) {
+			if(!remaining.remove(match.getValue().getId())){
+				falsePositives.add(match.getValue().getId());
+			}
+		}
 
 		logger.trace("%s of %s close vectors have been found",
-				neighbours.size() + "", NUMBER_OF_SIMULATION_VECTORS_CLOSE + "");
+				NUMBER_OF_SIMULATION_VECTORS_CLOSE-remaining.size(), NUMBER_OF_SIMULATION_VECTORS_CLOSE);
+		logger.trace(remaining);
+		
+		logger.trace("%s false positives have been found",
+				falsePositives.size());
+		logger.trace(falsePositives);
 	}
 
 	private static Set<FeatureVector<? extends Number>> generateSimulationVectors(
