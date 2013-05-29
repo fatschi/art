@@ -40,8 +40,8 @@ public class LSHRunner {
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
-	private static int NUMBER_OF_RANDOM_VECTORS_d = 1000;
-	private static int NUMBER_OF_PERMUTATIONS_q = 100;
+	private static int NUMBER_OF_RANDOM_VECTORS_d = 50;
+	private static int NUMBER_OF_PERMUTATIONS_q = 1000;
 	private static int WINDOW_SIZE_B = 10000;
 
 	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
