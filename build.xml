@@ -1,30 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="create_run_jar" name="Create Runnable Jar for Project art with libraries in sub-folder">
-    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
-    <!--ANT 1.7 is required                                        -->
-    <target name="create_run_jar">
-        <jar destfile="/home/fabian/art/tartget/lsh.jar">
-            <manifest>
-                <attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunner"/>
-                <attribute name="Class-Path" value=". lsh_lib/commons-lang3-3.1.jar lsh_lib/guava-14.0.1.jar lsh_lib/qtag.jar lsh_lib/lingpipe-4.1.0.jar lsh_lib/boilerpipe-1.1.0.jar lsh_lib/nekohtml-1.9.13.jar lsh_lib/xerces-2.9.1.jar lsh_lib/commons-collections-3.2.1.jar lsh_lib/log4j-api-2.0-beta6.jar lsh_lib/log4j-core-2.0-beta6.jar lsh_lib/commons-cli-1.2.jar lsh_lib/junit.jar lsh_lib/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
-            </manifest>
-            <fileset dir="/home/fabian/art/bin"/>
-        </jar>
-        <delete dir="/home/fabian/art/tartget/lsh_lib"/>
-        <mkdir dir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/commons-lang3-3.1.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/guava-14.0.1.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/qtag.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/lingpipe-4.1.0.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/boilerpipe-1.1.0.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/nekohtml-1.9.13.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/xerces-2.9.1.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/commons-collections-3.2.1.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/log4j-api-2.0-beta6.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/log4j-core-2.0-beta6.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/art/lib/commons-cli-1.2.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/Desktop/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-        <copy file="/home/fabian/Desktop/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar" todir="/home/fabian/art/tartget/lsh_lib"/>
-    	<scp file="/home/fabian/art/tartget/lsh.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa"/>
-    </target>
+	<!--this file was created by Eclipse Runnable JAR Export Wizard-->
+	<!--ANT 1.7 is required                                        -->
+	<target name="create_run_jar">
+		<jar destfile="/home/fabian/art/target/lsh.jar">
+			<manifest>
+				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunner" />
+				<attribute name="Class-Path" value=". lsh_lib/commons-lang3-3.1.jar lsh_lib/guava-14.0.1.jar lsh_lib/qtag.jar lsh_lib/lingpipe-4.1.0.jar lsh_lib/boilerpipe-1.1.0.jar lsh_lib/nekohtml-1.9.13.jar lsh_lib/xerces-2.9.1.jar lsh_lib/commons-collections-3.2.1.jar lsh_lib/log4j-api-2.0-beta6.jar lsh_lib/log4j-core-2.0-beta6.jar lsh_lib/commons-cli-1.2.jar lsh_lib/sqlite-jdbc-3.7.2.jar lsh_lib/postgresql-9.2-1002.jdbc4.jar lsh_lib/junit.jar lsh_lib/org.hamcrest.core_1.1.0.v20090501071000.jar" />
+			</manifest>
+			<fileset dir="/home/fabian/art/bin" />
+		</jar>
+		<jar destfile="/home/fabian/art/target/db.jar">
+			<manifest>
+				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.DatabaseExtractor" />
+				<attribute name="Class-Path" value=". lsh_lib/commons-lang3-3.1.jar lsh_lib/guava-14.0.1.jar lsh_lib/qtag.jar lsh_lib/lingpipe-4.1.0.jar lsh_lib/boilerpipe-1.1.0.jar lsh_lib/nekohtml-1.9.13.jar lsh_lib/xerces-2.9.1.jar lsh_lib/commons-collections-3.2.1.jar lsh_lib/log4j-api-2.0-beta6.jar lsh_lib/log4j-core-2.0-beta6.jar lsh_lib/commons-cli-1.2.jar lsh_lib/sqlite-jdbc-3.7.2.jar lsh_lib/postgresql-9.2-1002.jdbc4.jar lsh_lib/junit.jar lsh_lib/org.hamcrest.core_1.1.0.v20090501071000.jar" />
+			</manifest>
+			<fileset dir="/home/fabian/art/bin" />
+		</jar>
+		<delete dir="/home/fabian/art/target/lsh_lib" />
+		<mkdir dir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/commons-lang3-3.1.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/guava-14.0.1.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/qtag.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/lingpipe-4.1.0.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/boilerpipe-1.1.0.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/nekohtml-1.9.13.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/xerces-2.9.1.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/commons-collections-3.2.1.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/log4j-api-2.0-beta6.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/log4j-core-2.0-beta6.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/commons-cli-1.2.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/sqlite-jdbc-3.7.2.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/art/lib/postgresql-9.2-1002.jdbc4.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/Desktop/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<copy file="/home/fabian/Desktop/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar" todir="/home/fabian/art/target/lsh_lib" />
+		<scp file="/home/fabian/art/target/lsh.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa" />
+		<scp file="/home/fabian/art/target/db.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa" />
+	</target>
 </project>
