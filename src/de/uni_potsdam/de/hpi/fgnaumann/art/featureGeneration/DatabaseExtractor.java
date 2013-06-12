@@ -57,9 +57,9 @@ public class DatabaseExtractor {
 					.getConnection(connectionString);
 			statement = connection.createStatement();
 			resultSet = statement
-					.executeQuery("SELECT * FROM rss_news_source;");
+					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
 			while (resultSet.next()) {
-				System.out.println(resultSet.getString("name"));
+				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
