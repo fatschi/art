@@ -81,7 +81,7 @@ public class DatabaseExtractor {
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
 				
 				//TFIDF
-				augment2TFIDF(new ArrayList(articleFeatureVecs), termInNumDocsCounts, docCount);
+				augment2TFIDF(new ArrayList<HashMap<Integer, Float>>(articleFeatureVecs), termInNumDocsCounts, docCount);
 				
 				
 //				for (HashMap<Integer, Float> hashMap : articleFeatureVecs) {
@@ -203,7 +203,7 @@ public class DatabaseExtractor {
 	private static HashMap<String, Integer> toSortedGlobalFeatureMap(
 			HashSet<String> commonNouns) {
 		HashMap<String, Integer> globalFeaturePositionMap = new HashMap<String, Integer>(commonNouns.size());
-		ArrayList<String> collectionFeaturePosition = new ArrayList(new TreeSet(commonNouns)); // Sort them. e.g. lexicographically
+		ArrayList<String> collectionFeaturePosition = new ArrayList<String>(new TreeSet<String>(commonNouns)); // Sort them. e.g. lexicographically
 		int i = 0;
 		for (String gloabalFeature : collectionFeaturePosition) {
 			globalFeaturePositionMap.put(gloabalFeature, i++);
@@ -464,10 +464,10 @@ public class DatabaseExtractor {
 		}
 		if (line.hasOption("out")) {
 			outPath = line.getOptionValue("out");
-		} else {
+		} /*else {
 			System.err.println("ERROR: NO OUTPATH SPECIFIED");
 			return false;
-		}
+		}*/
 		return true;
 	}
 	
