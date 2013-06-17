@@ -35,20 +35,21 @@ public class LSHRunner {
 	private static Logger logger = LogManager
 			.getFormatterLogger(LSHRunner.class.getName());
 
-	private static double SIMILARITY_THRESHOLD = 0.05d;
+	private static double SIMILARITY_THRESHOLD = 0.1d;
 	private static int CORES = Runtime.getRuntime().availableProcessors();
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
-	private static int NUMBER_OF_RANDOM_VECTORS_d = 50;
-	private static int NUMBER_OF_PERMUTATIONS_q = 1000;
-	private static int WINDOW_SIZE_B = 10000;
-
-	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
+	private static int NUMBER_OF_SIMULATION_VECTORS = 10000;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
 	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
+	private static int SPARSITY = 10;
 	private static int SIMULATION_VECTOR_VALUE_SPACE = 1000;
 	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.15;
+
+	private static int NUMBER_OF_RANDOM_VECTORS_d = 50;
+	private static int NUMBER_OF_PERMUTATIONS_q = 1;
+	private static int WINDOW_SIZE_B = NUMBER_OF_SIMULATION_VECTORS;
 
 	private static Random rnd = new Random();
 
@@ -132,6 +133,12 @@ public class LSHRunner {
 						"the value variance of the close vectors as a fraction of the overall value range")
 				.create("varianceOfSimulationVectorsClose");
 
+		Option sparsityOfSimulationVectors = OptionBuilder
+				.withArgName("sparsityOfSimulationVectors")
+				.hasArg()
+				.withDescription("the value sparsity of the simulation vectors")
+				.create("sparsityOfSimulationVectors");
+
 		Option loadSimulationInputFile = OptionBuilder
 				.withArgName("loadSimulationInputFile")
 				.hasArg()
@@ -145,6 +152,7 @@ public class LSHRunner {
 				"make a benchmark with randomly generated feature vectors");
 
 		return cliOptions.addOption(loadSimulationInputFile)
+				.addOption(sparsityOfSimulationVectors)
 				.addOption(varianceOfSimulationVectorsClose)
 				.addOption(dimensionalityOfSimulationVectors)
 				.addOption(numberOfSimulationVectorsClose)
@@ -193,6 +201,10 @@ public class LSHRunner {
 			VARIANCE_OF_SIMULATION_VECTORS_CLOSE = Double.parseDouble(line
 					.getOptionValue("varianceOfSimulationVectorsClose"));
 		}
+		if (line.hasOption("sparsityOfSimulationVectors")) {
+			SPARSITY = Integer.parseInt(line
+					.getOptionValue("sparsityOfSimulationVectors"));
+		}
 		if (line.hasOption("loadSimulationInputFile")) {
 			INPUT_VECTORS_OUT_FILE = line
 					.getOptionValue("loadSimulationInputFile");
@@ -235,8 +247,10 @@ public class LSHRunner {
 			logger.trace("simulation started - started generation of random feature vectors");
 			Integer[] searchVectorValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-				searchVectorValues[j] = rnd
-						.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
+				if (rnd.nextInt(SPARSITY + 1) % SPARSITY == 0) {
+					searchVectorValues[j] = rnd
+							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
+				}
 			}
 			searchVector = new NumberListFeatureVector<Integer>(-1,
 					searchVectorValues);
@@ -274,23 +288,24 @@ public class LSHRunner {
 		for (Pair<Double, FeatureVector<? extends Number>> match : neighbours) {
 			logger.info(match.getValue().getId() + " : " + match.getKey());
 		}
-		
+
 		Set<Integer> remaining = new HashSet<Integer>();
-		for(Integer i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++){
+		for (Integer i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
 			remaining.add(i);
 		}
 		Set<Integer> falsePositives = new HashSet<Integer>();
-		
+
 		for (Pair<Double, FeatureVector<? extends Number>> match : neighbours) {
-			if(!remaining.remove(match.getValue().getId())){
+			if (!remaining.remove(match.getValue().getId())) {
 				falsePositives.add(match.getValue().getId());
 			}
 		}
 
 		logger.trace("%s of %s close vectors have been found",
-				NUMBER_OF_SIMULATION_VECTORS_CLOSE-remaining.size(), NUMBER_OF_SIMULATION_VECTORS_CLOSE);
+				NUMBER_OF_SIMULATION_VECTORS_CLOSE - remaining.size(),
+				NUMBER_OF_SIMULATION_VECTORS_CLOSE);
 		logger.trace(remaining);
-		
+
 		logger.trace("%s false positives have been found",
 				falsePositives.size());
 		logger.trace(falsePositives);
@@ -303,8 +318,16 @@ public class LSHRunner {
 			Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
 				int variance = (int) (SIMULATION_VECTOR_VALUE_SPACE * VARIANCE_OF_SIMULATION_VECTORS_CLOSE);
-				closeValueFeatureValues[j] = searchVectorValues[j]
-						- rnd.nextInt(variance) + rnd.nextInt(variance);
+				if (searchVectorValues[j] != null) {
+					closeValueFeatureValues[j] = searchVectorValues[j]
+							- rnd.nextInt(variance) + rnd.nextInt(variance);
+				} else {
+					if (rnd.nextInt(SPARSITY * SPARSITY + 1) % SPARSITY
+							* SPARSITY == 0) {
+						closeValueFeatureValues[j] = -rnd.nextInt(variance)
+								+ rnd.nextInt(variance);
+					}
+				}
 
 			}
 			FeatureVector<? extends Number> closeValueFeatureVector = new NumberListFeatureVector<Integer>(
@@ -315,8 +338,10 @@ public class LSHRunner {
 		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS; i++) {
 			Integer[] randomFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-				randomFeatureValues[j] = rnd
-						.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
+				if (rnd.nextInt(SPARSITY + 1) % SPARSITY == 0) {
+					randomFeatureValues[j] = rnd
+							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
+				}
 			}
 			FeatureVector<? extends Number> randomFeatureVector = new NumberListFeatureVector<Integer>(
 					inputVectors.size(), randomFeatureValues);
