@@ -1,5 +1,16 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -63,19 +74,19 @@ public class DatabaseExtractor {
 				formatter.printHelp("LSH", options);
 			}
 			if (evaluateCLIParameters(line)) {
-//				HashSet<String> descriptiveNouns = getDescriptiveNouns();
+//				FIXME HashSet<String> descriptiveNouns = getDescriptiveNouns(); // Uncomment in case of new corpus
 				
-				
+				// A dump of the most descriptive rss article corpus nouns .
 				HashSet<String> descriptiveNouns = loadFakeCollectionSet();
 				// Verbose
 				if (debug) {
 					for (String globalNoun : descriptiveNouns) {
 						System.out.println(globalNoun);
-					} 
+					}
 					System.out.println("NOUN#=" + descriptiveNouns.size());
 				}
 				
-				int LIMIT = 2000;
+				int LIMIT = -1;
 				LinkedList<HashMap<Integer, Float>> articleFeatureVecs = new LinkedList<HashMap<Integer, Float>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());		
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
@@ -83,13 +94,10 @@ public class DatabaseExtractor {
 				//TFIDF
 				augment2TFIDF(new ArrayList<HashMap<Integer, Float>>(articleFeatureVecs), termInNumDocsCounts, docCount);
 				
-				
-//				for (HashMap<Integer, Float> hashMap : articleFeatureVecs) {
-//					for (Integer pos : hashMap.keySet()) {
-//						System.out.print(pos + "=" + hashMap.get(pos) + ", ");
-//					}
-//					System.out.println();
-//				}
+				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
+				 
+				LinkedList<HashMap<Integer, Float>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
+				 
 			}
 		} catch (ParseException exp) {
 			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
@@ -97,13 +105,73 @@ public class DatabaseExtractor {
 
 	}
 
+	private static void writeFeatures(LinkedList<HashMap<Integer, Float>> articleFeatureVecs, String path) {
+		 try{
+		      //use buffering
+		      OutputStream file = new FileOutputStream(path);
+		      OutputStream buffer = new BufferedOutputStream( file );
+		      ObjectOutput output = new ObjectOutputStream( buffer );
+		      try{
+		        output.writeObject(articleFeatureVecs);
+		      }
+		      finally{
+		        output.close();
+		      }
+		    }  
+		    catch(IOException ex){
+		      System.err.println("Cannot perform output." + ex);
+		    }		
+	}
+
+	public static LinkedList<HashMap<Integer, Float>> readfeatures(String path) {
+		LinkedList<HashMap<Integer, Float>> recoveredList  = null; 
+		try{
+		      //use buffering
+		      InputStream file = new FileInputStream(path);
+		      InputStream buffer = new BufferedInputStream( file );
+		      ObjectInput input = new ObjectInputStream ( buffer );
+		      try{
+		        //deserialize the List
+		    	recoveredList = (LinkedList<HashMap<Integer, Float>>) input.readObject();
+		        //display its data
+		        printFeatureVec(recoveredList);
+		      }
+		      finally{
+		        input.close();
+		      }
+		    }
+		    catch(ClassNotFoundException ex){
+		      System.err.println("Cannot perform input. Class not found." + ex);
+		    }
+		    catch(IOException ex){
+		    	System.err.println("Cannot perform input." + ex);
+		    }
+		return recoveredList;
+	}
+
+	private static void printFeatureVec(
+			LinkedList<HashMap<Integer, Float>> recoveredList) {
+		short i = 0;
+		long entries = 0l;
+		for (HashMap<Integer, Float> hashMap : recoveredList) {
+			System.out.print(i++ + "\t");
+			entries += hashMap.size(); // Count num features > 0
+			for (Integer pos : hashMap.keySet()) {
+				System.out.print(pos + "=" + hashMap.get(pos) + ", ");
+			}
+			System.out.println();
+		}
+		System.out.println("Features:" + entries);
+	}
+
 	/**
 	 * Turn TF into TF IDF vector.
 	 * @param articleFeatureVecs
 	 * @param termInNumDocsCounts
 	 * @param docCount
+	 * @return 
 	 */
-	private static void augment2TFIDF(
+	private static ArrayList<HashMap<Integer, Float>> augment2TFIDF(
 				   ArrayList<HashMap<Integer, Float>> articleFeatureVecs,
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
@@ -119,6 +187,7 @@ public class DatabaseExtractor {
 			}
 			articleFeatureVecs.set(i, featureVec);
 		}
+		return articleFeatureVecs;
 	}
 
 	/**
