@@ -314,6 +314,128 @@ public class NounExtractor {
 	}
 
 	/**
+	 * Extract nouns from a space concatenated list of sentences. Multiple
+	 * sentences work best. Result tokens are lowercased to reduce the number
+	 * of different words.
+	 * 
+	 * @param oneLongString
+	 * @return
+	 */
+	public HashMap<String, Long> getLowercaseNouns(String oneLongString) {
+
+		// Result
+		HashMap<String, Long> nouns = new HashMap<String, Long>();
+
+		List<String> tokenList = new ArrayList<String>();
+		List<String> whiteList = new ArrayList<String>();
+
+		// Tokenize (chunk) the text.
+		Tokenizer tokenizer = TOKENIZER_FACTORY.tokenizer(
+				oneLongString.toCharArray(), 0, oneLongString.length());
+		tokenizer.tokenize(tokenList, whiteList);
+		String[] tokens = tokenList.toArray(new String[tokenList.size()]); // Words
+		String[] tags = this.tagger.tag(tokens); // POS tag per word
+
+		// To LowerCase Array ##################################################
+		for (int i = 0; i < tokens.length; i++) {
+			tokens[i] = tokens[i].toLowerCase();
+		}
+		
+		// Save found nouns to HashMap
+		for (int i = 0; i < tags.length; i++) {
+			if (tags[i] == null || // words like, capita and fait appelli
+									// produce null POS tags. Are infact nouns.
+					tags[i].startsWith("FW") || // foreign words are often names
+												// of objects, concepts or
+												// people
+					tags[i].startsWith("N")) { // Noun types
+			// tags[i].startsWith("??")) { // Unknowns (we assume nouns, names
+			// etc.) Details in README.md.
+			// if (tokens[i].matches("\\A\\w{2,}\\z")) { // Only words not signs
+			// or the like. min 2 letters
+				if (tokens[i].matches("^[a-zA-Z]{2,}+$")) { // Only words not
+															// signs or the
+															// like. min 2
+															// letters
+					Long oldcount = nouns.get(tokens[i]);
+					if (oldcount != null) {
+						nouns.put(tokens[i], oldcount + 1); // found once more
+					} else {
+						nouns.put(tokens[i], 1L); // found once
+					}
+				}
+			}
+		}
+		return nouns;
+	}
+	
+	/**
+	 * Counts collection features within a single document (article). Also count the most frequent noun of the document for "augmented frequency TF" and updates the 
+	 * #docs a collection feature term appears in by +1 for each feature term found in the doc.
+	 * @param sortedCommonNounPositions unchanged
+	 * @param mostFrequentNoun 2nd RETURNPARAM!
+	 * @param docsWithTermCountInCollection UPDATED within the function.
+	 * @param article 
+	 * @return 3 RETURNS: A sparse feature counts vector = (HashMap<Long, Long>) that is sorted as the common collection feature noun list. (TF - augmented frequency)
+	 * <p> + count of the articles' most common noun.               (TF - augmented frequency)
+	 * <p> + an updated map of the #docs a feature term appears in. (IDF) 
+	 */
+	public HashMap<Integer, Float> generateFeature(final HashMap<String, Integer> sortedCommonNounPositions, HashMap<Integer, Long> docsWithTermCountInCollection, String article) {
+		HashMap<Integer, Float> featureVec = new HashMap<Integer, Float>(sortedCommonNounPositions.size());
+		HashMap<String, Long> articleNouns = getLowercaseNouns(article);
+		long mostFrequentNoun = 0L;
+		for (String articleNoun : getLowercaseNouns(article).keySet()) {
+			// Save max noun in article (TF)
+			Long articleNounCount = articleNouns.get(articleNoun); // How often does this feature word appear in the article?
+			
+//			if (articleNounCount==null) {
+//				System.out.println(articleNoun + ":" + articleNouns.toString());
+//				System.exit(1);
+//			}
+			
+			
+			mostFrequentNoun = Math.max(articleNounCount, mostFrequentNoun);
+			if (sortedCommonNounPositions.containsKey(articleNoun)) {
+				// for each feature word.
+
+				// Update #docs containing a feature term by +1. Needed for IDF
+				Integer globalNounFeaturePos = sortedCommonNounPositions.get(articleNoun);
+				Long docContainingTermCount = docsWithTermCountInCollection.get(globalNounFeaturePos);
+				if(docContainingTermCount != null) {
+					docsWithTermCountInCollection.put(globalNounFeaturePos, ++docContainingTermCount);
+				} else {
+					docsWithTermCountInCollection.put(globalNounFeaturePos, 1L);
+				}
+
+				// Record count of the feature
+				featureVec.put(globalNounFeaturePos, new Float(articleNounCount));
+			}
+		}
+		
+		// Get augmented frequency TF.
+		Float rawFreq = 0f;
+		for (Integer activeFeaturePos : featureVec.keySet()) {
+			rawFreq = featureVec.get(activeFeaturePos);
+			// Update feature value via augmented frequency.
+			featureVec.put(activeFeaturePos, toAugmentedTF(0.4f, rawFreq, mostFrequentNoun)); 
+		}
+		// Return the Augmented TF vector.
+		return featureVec;
+	}
+	
+	/**
+	 * Augmented TF as given by Bishop et al. in "Introduction to Information Retrieval", Cambridge University Press. 2008. 
+	 * @param alpha usually set to 0.4 (or 0.5 in older works)
+	 * @param rawFreq (raw TF of a feature term)
+	 * @param mostFrequentNoun (count of most common feature in the document)
+	 * @return Augmented TF as defined by SMART notation (See Bishop).
+	 */
+	private Float toAugmentedTF(float alpha, float rawFreq, float mostFrequentNoun) {
+		return  (alpha  + ((alpha * rawFreq) / 
+				            mostFrequentNoun));
+	}
+
+	/**
 	 * Extracts Fulltext from an HTML Document.
 	 * 
 	 * @param html
