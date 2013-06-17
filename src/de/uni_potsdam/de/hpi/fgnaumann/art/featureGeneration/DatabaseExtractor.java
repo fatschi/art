@@ -87,17 +87,18 @@ public class DatabaseExtractor {
 					System.out.println("NOUN#=" + descriptiveNouns.size());
 				}
 				
-				int LIMIT = -1;
+				int LIMIT = 100;
 				LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
 				
+//				printFeatureVec(articleFeatureVecs);
 				//TFIDF
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 				
 				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
 				 
-//				LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
+				LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
 				 
 			}
 		} catch (ParseException exp) {
@@ -134,8 +135,6 @@ public class DatabaseExtractor {
 		      try{
 		        //deserialize the List
 		    	recoveredList = (LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>>) input.readObject();
-		        //display its data
-		        printFeatureVec(recoveredList);
 		      }
 		      finally{
 		        input.close();
@@ -185,7 +184,7 @@ public class DatabaseExtractor {
 				// Update the TF value to the TF IDF value
 				featureVec.put(pos, (float) (TF*IDF));
 			}
-			articleFeatureVecs.set(i, new ImmutablePair<Long, HashMap<Integer,Float>>(new Long(i), featureVec) );
+			articleFeatureVecs.set(i, new ImmutablePair<Long, HashMap<Integer,Float>>(articleFeatureVecs.get(i).left, featureVec) );
 		}
 		return articleFeatureVecs;
 	}
@@ -246,7 +245,7 @@ public class DatabaseExtractor {
 				++doccount;
 				
 				fulltext = cleanText(fulltext);
-				
+								
 				// Generate augmentedTF feature vector. Also get IDF counts.
 				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Float>>
 											(Long.parseLong(resultSet.getString("id")),
@@ -275,7 +274,7 @@ public class DatabaseExtractor {
 	private static HashMap<String, Integer> toSortedGlobalFeatureMap(
 			HashSet<String> commonNouns) {
 		HashMap<String, Integer> globalFeaturePositionMap = new HashMap<String, Integer>(commonNouns.size());
-		ArrayList<String> collectionFeaturePosition = new ArrayList(new TreeSet(commonNouns)); // Sort them. e.g. lexicographically
+		ArrayList<String> collectionFeaturePosition = new ArrayList<String>(new TreeSet<String>(commonNouns)); // Sort them. e.g. lexicographically
 		int i = 0;
 		for (String gloabalFeature : collectionFeaturePosition) {
 			globalFeaturePositionMap.put(gloabalFeature, i++);
@@ -536,10 +535,10 @@ public class DatabaseExtractor {
 		}
 		if (line.hasOption("out")) {
 			outPath = line.getOptionValue("out");
-		} else {
+		} /*else {
 			System.err.println("ERROR: NO OUTPATH SPECIFIED");
 			return false;
-		}
+		}*/
 		return true;
 	}
 	
