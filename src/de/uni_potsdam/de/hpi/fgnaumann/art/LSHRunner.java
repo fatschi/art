@@ -26,9 +26,11 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.lsh.LSH;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 public class LSHRunner {
+
+	private static final int STORAGE_THRESHOLD = 0;
 
 	private static String INPUT_VECTORS_OUT_FILE = null;
 
@@ -40,11 +42,11 @@ public class LSHRunner {
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
-	private static int NUMBER_OF_SIMULATION_VECTORS = 10000;
+	private static int NUMBER_OF_SIMULATION_VECTORS = 100;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
-	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
+	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 100;
 	private static int SPARSITY = 10;
-	private static int SIMULATION_VECTOR_VALUE_SPACE = 1000;
+	private static int SIMULATION_VECTOR_VALUE_SPACE = 100;
 	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.15;
 
 	private static int NUMBER_OF_RANDOM_VECTORS_d = 50;
@@ -252,11 +254,13 @@ public class LSHRunner {
 							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 				}
 			}
-			searchVector = new NumberListFeatureVector<Integer>(-1,
+			searchVector = new PrimitiveMapFeatureVector<Integer>(-1,
 					searchVectorValues);
+//			searchVector = new NumberListFeatureVector<Integer>(-1,
+//					searchVectorValues);
 
 			inputVectors = generateSimulationVectors(searchVectorValues);
-			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= 1000 * 20000) {
+			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= STORAGE_THRESHOLD) {
 				try {
 					FileOutputStream fos;
 					fos = new FileOutputStream((new Date()).toString() + "_dim"
@@ -330,8 +334,10 @@ public class LSHRunner {
 				}
 
 			}
-			FeatureVector<? extends Number> closeValueFeatureVector = new NumberListFeatureVector<Integer>(
+			FeatureVector<? extends Number> closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
 					inputVectors.size(), closeValueFeatureValues);
+//			FeatureVector<? extends Number> closeValueFeatureVector = new NumberListFeatureVector<Integer>(
+//					inputVectors.size(), closeValueFeatureValues);
 			inputVectors.add(closeValueFeatureVector);
 		}
 
@@ -343,7 +349,7 @@ public class LSHRunner {
 							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 				}
 			}
-			FeatureVector<? extends Number> randomFeatureVector = new NumberListFeatureVector<Integer>(
+			FeatureVector<? extends Number> randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
 					inputVectors.size(), randomFeatureValues);
 			inputVectors.add(randomFeatureVector);
 		}

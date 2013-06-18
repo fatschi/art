@@ -88,7 +88,7 @@ public class DatabaseExtractor {
 				}
 				
 				int LIMIT = 100;
-				LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>>();
+				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
 				
@@ -98,7 +98,7 @@ public class DatabaseExtractor {
 				
 				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
 				 
-				LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
+				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
 				 
 			}
 		} catch (ParseException exp) {
@@ -107,7 +107,7 @@ public class DatabaseExtractor {
 
 	}
 
-	private static void writeFeatures(LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> articleFeatureVecs, String path) {
+	private static void writeFeatures(LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs, String path) {
 		 try{
 		      //use buffering
 		      OutputStream file = new FileOutputStream(path);
@@ -125,8 +125,8 @@ public class DatabaseExtractor {
 		    }		
 	}
 
-	public static LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> readfeatures(String path) {
-		LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> recoveredList  = null; 
+	public static LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> readfeatures(String path) {
+		LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> recoveredList  = null; 
 		try{
 		      //use buffering
 		      InputStream file = new FileInputStream(path);
@@ -134,7 +134,7 @@ public class DatabaseExtractor {
 		      ObjectInput input = new ObjectInputStream ( buffer );
 		      try{
 		        //deserialize the List
-		    	recoveredList = (LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>>) input.readObject();
+		    	recoveredList = (LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>) input.readObject();
 		      }
 		      finally{
 		        input.close();
@@ -150,9 +150,9 @@ public class DatabaseExtractor {
 	}
 
 	private static void printFeatureVec(
-			LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> recoveredList) {
+			LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> recoveredList) {
 		long entries = 0l;
-		for (ImmutablePair<Long, HashMap<Integer, Float>> hashMap : recoveredList) {
+		for (ImmutablePair<Long, HashMap<Integer, Double>> hashMap : recoveredList) {
 			System.out.print(hashMap.left + "\t");
 			entries += hashMap.right.size(); // Count num features > 0
 			for (Integer pos : hashMap.right.keySet()) {
@@ -170,21 +170,21 @@ public class DatabaseExtractor {
 	 * @param docCount
 	 * @return 
 	 */
-	private static LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> augment2TFIDF(
-				   LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> articleFeatureVecs,
+	private static LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> augment2TFIDF(
+				   LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs,
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
 		for (int i = 0; i!=articleFeatureVecs.size(); ++i) {
-			HashMap<Integer, Float> featureVec = articleFeatureVecs.get(i).right;
+			HashMap<Integer, Double> featureVec = articleFeatureVecs.get(i).right;
 			for (Integer pos : featureVec.keySet()) {
-				float TF  = featureVec.get(pos);
-				double IDF = Math.log((float) docCount/
-						    (float) termInNumDocsCounts.get(pos));
+				double TF  = featureVec.get(pos);
+				double IDF = Math.log((double) docCount/
+						    (double) termInNumDocsCounts.get(pos));
 				
 				// Update the TF value to the TF IDF value
-				featureVec.put(pos, (float) (TF*IDF));
+				featureVec.put(pos, (double) (TF*IDF));
 			}
-			articleFeatureVecs.set(i, new ImmutablePair<Long, HashMap<Integer,Float>>(articleFeatureVecs.get(i).left, featureVec) );
+			articleFeatureVecs.set(i, new ImmutablePair<Long, HashMap<Integer,Double>>(articleFeatureVecs.get(i).left, featureVec) );
 		}
 		return articleFeatureVecs;
 	}
@@ -192,7 +192,7 @@ public class DatabaseExtractor {
 	/**
 	 * Method that counts for every documents its feature counts
 	 */
-	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
+	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
 		/** IDF parts. */
 		long doccount = 0;
 		
@@ -247,7 +247,7 @@ public class DatabaseExtractor {
 				fulltext = cleanText(fulltext);
 								
 				// Generate augmentedTF feature vector. Also get IDF counts.
-				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Float>>
+				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Double>>
 											(Long.parseLong(resultSet.getString("id")),
 									         nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, fulltext))); 
 				

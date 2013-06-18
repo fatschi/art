@@ -1,55 +1,55 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl;
 
-import it.unimi.dsi.fastutil.ints.Int2FloatAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2FloatMap;
+import it.unimi.dsi.fastutil.ints.Int2DoubleAVLTreeMap;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 
-public class FloatMapFeatureVector<T extends Float> implements
+public class PrimitiveMapFeatureVector<T extends Number> implements
 		FeatureVector<T> {
-	private static Logger logger = LogManager
-			.getFormatterLogger(FloatMapFeatureVector.class.getName());
 
 	private static final long serialVersionUID = -514366940793968554L;
-	private Int2FloatMap features;
+	private Int2DoubleAVLTreeMap featuresMap;
 
 	private Integer id;
 	private Integer dimensions;
 	private SignatureVector localitySensitiveHashed;
 
 	@SafeVarargs
-	public FloatMapFeatureVector(T... features) {
-		this.dimensions = features.length;
-		this.features = new Int2FloatAVLTreeMap();
-		this.features.defaultReturnValue(0);
-		for (int i = 0; i < features.length; i++) {
-			if (features[i] != null)
-				this.features.put(i, (float) features[i]);
-		}
-	}
-
-	@SafeVarargs
-	public FloatMapFeatureVector(Integer id, T... features) {
-		this(features);
+	public PrimitiveMapFeatureVector(Integer id, Integer dimensionality) {
+		this.dimensions = dimensionality;
+		featuresMap = new Int2DoubleAVLTreeMap();
 		this.id = id;
 	}
-
+	
+	@SafeVarargs
+	public PrimitiveMapFeatureVector(Integer id, T... features) {
+		this.dimensions = features.length;
+		featuresMap = new Int2DoubleAVLTreeMap();
+		for (int i = 0; i < features.length; i++) {
+			if (features[i] != null)
+				this.featuresMap.put(i, features[i].intValue());
+		}
+		this.id = id;
+	}
+	
+	@SafeVarargs
+	public PrimitiveMapFeatureVector(Integer id, Integer dimensionality, Map<Integer, Double> features) {
+		this.dimensions = dimensionality;
+		featuresMap = new Int2DoubleAVLTreeMap(features);
+		this.id = id;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<T> getValues() {
-		return Arrays.asList(((T[]) this.features.values().toArray()));
+		return Arrays.asList(((T[]) this.featuresMap.values().toArray()));
 	}
 
 	@Override
@@ -59,13 +59,13 @@ public class FloatMapFeatureVector<T extends Float> implements
 
 	@Override
 	public void setValue(Integer dimension, T value) {
-		this.features.put(dimension, value);
+		this.featuresMap.put(dimension.intValue(), value.floatValue());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public T getValue(Integer dimension) {
-		return (T) this.features.get(dimension);
+		return (T) this.featuresMap.get(dimension);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class FloatMapFeatureVector<T extends Float> implements
 		for (int i = 0; i != this.getDimensionality(); ++i) {
 			// TODO check the type of the vector
 			sum += wd.getValue(i).doubleValue()
-					* this.features.get(i);
+					* this.featuresMap.get(i);
 		}
 
 		// sign binary function
@@ -123,8 +123,8 @@ public class FloatMapFeatureVector<T extends Float> implements
 	
 	@Override
 	public String toString() {
-		return ("FeatureVector [id=" + id + ", features="+this.features+ ", localitySensitiveHashed="
-				+ getLocalitySensitiveHashed() + ", features=" + features + "]");
+		return ("FeatureVector [id=" + id + ", features="+this.featuresMap+ ", localitySensitiveHashed="
+				+ getLocalitySensitiveHashed() + ", features=" + featuresMap + "]");
 	}
 
 }

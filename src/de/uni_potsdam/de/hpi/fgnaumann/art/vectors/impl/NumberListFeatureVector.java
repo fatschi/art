@@ -18,16 +18,11 @@ public class NumberListFeatureVector<T extends Number> implements
 	private Integer zero = Integer.valueOf(0);
 
 	@SafeVarargs
-	public NumberListFeatureVector(T... features) {
+	public NumberListFeatureVector(Integer id, T... features) {
 		this.features = new ArrayList<T>();
 		for (T feature : features) {
 			this.features.add(feature);
 		}
-	}
-
-	@SafeVarargs
-	public NumberListFeatureVector(Integer id, T... features) {
-		this(features);
 		this.id = id;
 	}
 

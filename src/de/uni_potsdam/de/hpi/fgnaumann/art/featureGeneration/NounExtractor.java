@@ -380,8 +380,8 @@ public class NounExtractor {
 	 * <p> + count of the articles' most common noun.               (TF - augmented frequency)
 	 * <p> + an updated map of the #docs a feature term appears in. (IDF) 
 	 */
-	public HashMap<Integer, Float> generateFeature(final HashMap<String, Integer> sortedCommonNounPositions, HashMap<Integer, Long> docsWithTermCountInCollection, String article) {
-		HashMap<Integer, Float> featureVec = new HashMap<Integer, Float>(sortedCommonNounPositions.size());
+	public HashMap<Integer, Double> generateFeature(final HashMap<String, Integer> sortedCommonNounPositions, HashMap<Integer, Long> docsWithTermCountInCollection, String article) {
+		HashMap<Integer, Double> featureVec = new HashMap<Integer, Double>(sortedCommonNounPositions.size());
 		HashMap<String, Long> articleNouns = getLowercaseNouns(article);
 		long mostFrequentNoun = 0L;
 		for (String articleNoun : getLowercaseNouns(article).keySet()) {
@@ -408,12 +408,12 @@ public class NounExtractor {
 				}
 
 				// Record count of the feature
-				featureVec.put(globalNounFeaturePos, new Float(articleNounCount));
+				featureVec.put(globalNounFeaturePos, new Double(articleNounCount));
 			}
 		}
 		
 		// Get augmented frequency TF.
-		Float rawFreq = 0f;
+		Double rawFreq = 0d;
 		for (Integer activeFeaturePos : featureVec.keySet()) {
 			rawFreq = featureVec.get(activeFeaturePos);
 			// Update feature value via augmented frequency.
@@ -430,7 +430,7 @@ public class NounExtractor {
 	 * @param mostFrequentNoun (count of most common feature in the document)
 	 * @return Augmented TF as defined by SMART notation (See Bishop).
 	 */
-	private Float toAugmentedTF(float alpha, float rawFreq, float mostFrequentNoun) {
+	private Double toAugmentedTF(double alpha, double rawFreq, double mostFrequentNoun) {
 		return  (alpha  + ((alpha * rawFreq) / 
 				            mostFrequentNoun));
 	}
