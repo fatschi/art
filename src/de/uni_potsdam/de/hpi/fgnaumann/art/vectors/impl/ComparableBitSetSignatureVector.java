@@ -1,27 +1,29 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.ComparableBitSet;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 
-public class ComparableBitSetSignatureVector implements SignatureVector {
+public class ComparableBitSetSignatureVector implements SignatureVector, Serializable {
+
+	private static final long serialVersionUID = -482400029141498267L;
 
 	protected ComparableBitSet values;
 
 	private Integer size;
 
-	private FeatureVector<? extends Number> parentVector;
+	private Long parentVectorId;
 
 	public ComparableBitSetSignatureVector(
-			FeatureVector<? extends Number> parentVector, Integer dimensionality) {
+			Long parentVectorId, Integer dimensionality) {
 		this.values = new ComparableBitSet(dimensionality);
 		this.size = dimensionality;
-		this.parentVector = parentVector;
+		this.parentVectorId = parentVectorId;
 	}
 
 	@Override
@@ -49,16 +51,11 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	}
 
 	@Override
-	public FeatureVector<? extends Number> getParentVector() {
-		return parentVector;
-	}
-
-	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((parentVector == null) ? 0 : parentVector.hashCode());
+				+ ((parentVectorId == null) ? 0 : parentVectorId.hashCode());
 		result = prime * result + ((size == null) ? 0 : size.hashCode());
 		result = prime * result + ((values == null) ? 0 : values.hashCode());
 		return result;
@@ -73,10 +70,10 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 		if (getClass() != obj.getClass())
 			return false;
 		ComparableBitSetSignatureVector other = (ComparableBitSetSignatureVector) obj;
-		if (parentVector == null) {
-			if (other.parentVector != null)
+		if (parentVectorId == null) {
+			if (other.parentVectorId != null)
 				return false;
-		} else if (!parentVector.equals(other.parentVector))
+		} else if (!parentVectorId.equals(other.parentVectorId))
 			return false;
 		if (size == null) {
 			if (other.size != null)
@@ -95,7 +92,7 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	public String toString() {
 		return "SignatureVector [values=" + values + ", size=" + size
 				+ ", parentVector="
-				+ (parentVector != null ? parentVector.getId() : "no parent")
+				+ (parentVectorId != null ? parentVectorId : "no parent")
 				+ "]";
 	}
 
@@ -109,7 +106,7 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	@Override
 	public SignatureVector permute(int[] randomPermutation) {
 		SignatureVector permutation = new ComparableBitSetSignatureVector(
-				this.parentVector, this.getDimensionality());
+				this.parentVectorId, this.getDimensionality());
 		int i = 0;
 		for (int position : randomPermutation) {
 			permutation.setValue(i, this.getValue(position));
@@ -127,10 +124,15 @@ public class ComparableBitSetSignatureVector implements SignatureVector {
 	public int compareTo(SignatureVector o) {
 
 		if (this.values.compareTo(o.getValuesAsBitSet()) == 0) {
-			return this.parentVector.getId().compareTo(
-					o.getParentVector().getId());
+			return this.getParentVectorId().compareTo(
+					o.getParentVectorId());
 		} else
 			return this.values.compareTo(o.getValuesAsBitSet());
+	}
+	
+	@Override
+	public Long getParentVectorId() {
+		return parentVectorId;
 	}
 
 }

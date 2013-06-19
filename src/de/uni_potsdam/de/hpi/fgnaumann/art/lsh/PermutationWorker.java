@@ -13,7 +13,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
 
 public class PermutationWorker implements
-		Callable<Map<FeatureVector<? extends Number>, Double>> {
+		Callable<Map<Long, Double>> {
 
 	private int[] randomPermutation;
 	private FeatureVector<? extends Number> searchVector;
@@ -30,8 +30,8 @@ public class PermutationWorker implements
 	}
 
 	@Override
-	public Map<FeatureVector<? extends Number>, Double> call() throws Exception {
-		Map<FeatureVector<? extends Number>, Double> outputMap = new HashMap<FeatureVector<? extends Number>, Double>();
+	public Map<Long, Double> call() throws Exception {
+		Map<Long, Double> outputMap = new HashMap<Long, Double>();
 
 		TreeBag sortedPermutationList = new TreeBag();
 
@@ -57,8 +57,8 @@ public class PermutationWorker implements
 		for (; i < searchVectorsSignaturePosition + WINDOW_SIZE_B / 2
 				&& i < sortedPermutationArray.length; i++) {
 			SignatureVector candidate = sortedPermutationArray[i];
-			if (candidate.getParentVector() != searchVector) {
-				outputMap.put(candidate.getParentVector(),
+			if (candidate.getParentVectorId() != searchVector.getId()) {
+				outputMap.put(candidate.getParentVectorId(),
 						searchVectorPermutation
 								.computeNormalizedHammingDistance(candidate));
 			}

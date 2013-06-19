@@ -17,19 +17,19 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	private static final long serialVersionUID = -514366940793968554L;
 	private Int2DoubleAVLTreeMap featuresMap;
 
-	private Integer id;
+	private Long id;
 	private Integer dimensions;
 	private SignatureVector localitySensitiveHashed;
 
 	@SafeVarargs
-	public PrimitiveMapFeatureVector(Integer id, Integer dimensionality) {
+	public PrimitiveMapFeatureVector(Long id, Integer dimensionality) {
 		this.dimensions = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap();
 		this.id = id;
 	}
 	
 	@SafeVarargs
-	public PrimitiveMapFeatureVector(Integer id, T... features) {
+	public PrimitiveMapFeatureVector(Long id, T... features) {
 		this.dimensions = features.length;
 		featuresMap = new Int2DoubleAVLTreeMap();
 		for (int i = 0; i < features.length; i++) {
@@ -40,7 +40,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	}
 	
 	@SafeVarargs
-	public PrimitiveMapFeatureVector(Integer id, Integer dimensionality, Map<Integer, Double> features) {
+	public PrimitiveMapFeatureVector(Long id, Integer dimensionality, Map<Integer, Double> features) {
 		this.dimensions = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap(features);
 		this.id = id;
@@ -77,7 +77,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	@Override
 	public void createLSH(Set<FeatureVector<? extends Number>> randomVectors) {
 		this.localitySensitiveHashed = new ComparableBitSetSignatureVector(
-				this, randomVectors.size());
+				this.getId(), randomVectors.size());
 		// Do d number of classifications
 		int i = 0;
 		for (FeatureVector<? extends Number> weightVector : randomVectors) {
@@ -112,7 +112,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	}
 
 	@Override
-	public Integer getId() {
+	public Long getId() {
 		return this.id;
 	}
 

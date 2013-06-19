@@ -12,13 +12,13 @@ public class NumberListFeatureVector<T extends Number> implements
 		FeatureVector<T> {
 	private static final long serialVersionUID = -583575794565479250L;
 
-	private Integer id;
+	private Long id;
 	private List<T> features;
 	private SignatureVector localitySensitiveHashed;
 	private Integer zero = Integer.valueOf(0);
 
 	@SafeVarargs
-	public NumberListFeatureVector(Integer id, T... features) {
+	public NumberListFeatureVector(Long id, T... features) {
 		this.features = new ArrayList<T>();
 		for (T feature : features) {
 			this.features.add(feature);
@@ -74,7 +74,7 @@ public class NumberListFeatureVector<T extends Number> implements
 	@Override
 	public void createLSH(Set<FeatureVector<? extends Number>> randomVectors) {
 		this.localitySensitiveHashed = new ComparableBitSetSignatureVector(
-				this, randomVectors.size());
+				this.getId(), randomVectors.size());
 		// Do d number of classifications
 		int i = 0;
 		for (FeatureVector<? extends Number> weightVector : randomVectors) {
@@ -115,7 +115,7 @@ public class NumberListFeatureVector<T extends Number> implements
 	}
 
 	@Override
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 

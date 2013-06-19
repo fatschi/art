@@ -7,7 +7,7 @@ public interface FeatureVector<T extends Number> extends Vector<T>, Serializable
 	
 	void createLSH(Set<FeatureVector<? extends Number>> randomVectors);
 
-	Integer getId();
+	Long getId();
 
 	SignatureVector getLocalitySensitiveHashed();
 

@@ -87,7 +87,7 @@ public class DatabaseExtractor {
 					System.out.println("NOUN#=" + descriptiveNouns.size());
 				}
 				
-				int LIMIT = 100;
+				int LIMIT = 2000;
 				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
@@ -99,6 +99,7 @@ public class DatabaseExtractor {
 				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
 				 
 				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
+				printFeatureVec(tfidfFeatures);
 				 
 			}
 		} catch (ParseException exp) {

@@ -31,11 +31,11 @@ public class LSH {
 
 	private static Random rnd = new Random();
 
-	public static List<Pair<Double, FeatureVector<? extends Number>>> computeNeighbours(
+	public static List<Pair<Double, Long>> computeNeighbours(
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			double maxDistance, int NTHREADS, int CHUNK_SIZE_CLASSIFIER_WORKER,
 			int NUMBER_OF_RANDOM_VECTORS_d, int NUMBER_OF_PERMUTATIONS_q,
-			int WINDOW_SIZE_B) {
+			int WINDOW_SIZE_B, boolean forceLSHUpdate) {
 		
 		//for convenience we add the search vector to the input vectors set
 		inputVectors.add(searchVector);
@@ -45,7 +45,7 @@ public class LSH {
 		Set<FeatureVector<? extends Number>> randomVectors = generateRandomWeightVectors(
 				NUMBER_OF_RANDOM_VECTORS_d, searchVector.getDimensionality());
 		logger.trace("finished generation of random vectors");
-
+		
 		// step 3 of paper: classification
 		ExecutorService classifierExecutor = Executors
 				.newFixedThreadPool(NTHREADS);
@@ -59,7 +59,7 @@ public class LSH {
 				tempSet.add(inputVector);
 				chunkSize++;
 			} else {
-				Runnable worker = new ClassifierWorker(tempSet, randomVectors);
+				Runnable worker = new ClassifierWorker(tempSet, randomVectors, forceLSHUpdate);
 				classifierExecutor.execute(worker);
 				tempSet = new HashSet<FeatureVector<? extends Number>>();
 				chunkSize = 0;
@@ -70,7 +70,7 @@ public class LSH {
 		}
 
 		if (tempSet.size() > 0) {
-			Runnable worker = new ClassifierWorker(tempSet, randomVectors);
+			Runnable worker = new ClassifierWorker(tempSet, randomVectors, forceLSHUpdate);
 			classifierExecutor.execute(worker);
 			chunkCount++;
 		}
@@ -94,17 +94,17 @@ public class LSH {
 		logger.trace("finished creation of random permutations");
 
 		logger.trace("starting assignment of permutation workers to executor");
-		Map<FeatureVector<? extends Number>, Double> candidates = new HashMap<FeatureVector<? extends Number>, Double>();
+		Map<Long, Double> candidates = new HashMap<Long, Double>();
 
 		ExecutorService pemutationExecutor = Executors
 				.newFixedThreadPool(NTHREADS);
-		List<Future<Map<FeatureVector<? extends Number>, Double>>> list = new ArrayList<Future<Map<FeatureVector<? extends Number>, Double>>>();
+		List<Future<Map<Long, Double>>> list = new ArrayList<Future<Map<Long, Double>>>();
 
 		for (int[] randomPermutation : randomPermutations) {
-			Callable<Map<FeatureVector<? extends Number>, Double>> worker = new PermutationWorker(
+			Callable<Map<Long, Double>> worker = new PermutationWorker(
 					randomPermutation, searchVector, inputVectors,
 					WINDOW_SIZE_B);
-			Future<Map<FeatureVector<? extends Number>, Double>> submit = pemutationExecutor
+			Future<Map<Long, Double>> submit = pemutationExecutor
 					.submit(worker);
 			list.add(submit);
 		}
@@ -113,7 +113,7 @@ public class LSH {
 				randomPermutations.size(),
 				(randomPermutations.size() > 1 ? "workers" : "worker"));
 
-		for (Future<Map<FeatureVector<? extends Number>, Double>> future : list) {
+		for (Future<Map<Long, Double>> future : list) {
 			try {
 				candidates.putAll(future.get());
 			} catch (InterruptedException e) {
@@ -125,12 +125,12 @@ public class LSH {
 		pemutationExecutor.shutdown();
 
 		logger.trace("started filtering of neighbours by threshold");
-		List<Pair<Double, FeatureVector<? extends Number>>> resultList = new ArrayList<Pair<Double, FeatureVector<? extends Number>>>();
-		for (Entry<FeatureVector<? extends Number>, Double> hammingDistances : candidates
+		List<Pair<Double, Long>> resultList = new ArrayList<Pair<Double, Long>>();
+		for (Entry<Long, Double> hammingDistances : candidates
 				.entrySet()) {
 			if (hammingDistances.getValue() <= maxDistance) {
 				resultList
-						.add(new ImmutablePair<Double, FeatureVector<? extends Number>>(
+						.add(new ImmutablePair<Double, Long>(
 								hammingDistances.getValue(), hammingDistances
 										.getKey()));
 			}
@@ -144,7 +144,7 @@ public class LSH {
 			Integer numberOfRandomVectors, Integer dimensionality) {
 		Set<FeatureVector<? extends Number>> randomWeightVectors = new HashSet<FeatureVector<? extends Number>>();
 		// For d random projections.
-		for (int di = 0; di < numberOfRandomVectors; di++) {
+		for (long di = 0; di < numberOfRandomVectors; di++) {
 			// Randomly generate a weight vector of random normal mean 0 and
 			// variance 1 weights.
 			FeatureVector<Double> dI = new PrimitiveMapFeatureVector<Double>(di, dimensionality);
