@@ -25,6 +25,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	public PrimitiveMapFeatureVector(Long id, Integer dimensionality) {
 		this.dimensions = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap();
+		featuresMap.defaultReturnValue(0);
 		this.id = id;
 	}
 	
@@ -32,6 +33,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	public PrimitiveMapFeatureVector(Long id, T... features) {
 		this.dimensions = features.length;
 		featuresMap = new Int2DoubleAVLTreeMap();
+		featuresMap.defaultReturnValue(0);
 		for (int i = 0; i < features.length; i++) {
 			if (features[i] != null)
 				this.featuresMap.put(i, features[i].intValue());
@@ -43,11 +45,14 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	public PrimitiveMapFeatureVector(Long id, Integer dimensionality, Map<Integer, Double> features) {
 		this.dimensions = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap(features);
+		featuresMap.defaultReturnValue(0);
 		this.id = id;
 	}
 	
+	//FIXME
 	@SuppressWarnings("unchecked")
 	@Override
+	@Deprecated
 	public List<T> getValues() {
 		return Arrays.asList(((T[]) this.featuresMap.values().toArray()));
 	}
