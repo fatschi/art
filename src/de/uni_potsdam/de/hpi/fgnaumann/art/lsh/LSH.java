@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 public class LSH {
@@ -268,10 +269,10 @@ public class LSH {
 		for (long di = 0; di < numberOfRandomVectors; di++) {
 			// Randomly generate a weight vector of random normal mean 0 and
 			// variance 1 weights.
-			FeatureVector<Double> dI = new PrimitiveMapFeatureVector<Double>(
-					di, dimensionality);
-			// FeatureVector<Double> dI = new
-			// NumberListFeatureVector<Double>(di);
+			//FeatureVector<Double> dI = new PrimitiveMapFeatureVector<Double>(
+				//	di, dimensionality);
+			FeatureVector<Double> dI = new
+			NumberListFeatureVector<Double>((long)di);
 			for (int ki = 0; ki < dimensionality; ki++) {
 				dI.setValue(ki, rnd.nextGaussian());
 			}

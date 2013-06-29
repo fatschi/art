@@ -38,7 +38,7 @@ public class LSHRunner {
 	private static Logger logger = LogManager
 			.getFormatterLogger(LSHRunner.class.getName());
 
-	private static double SIMILARITY_THRESHOLD = 0.3d;
+	private static double SIMILARITY_THRESHOLD = 1.0d;
 	private static int TOP_K = 5;
 	
 	private static int CORES = Runtime.getRuntime().availableProcessors();
@@ -47,7 +47,7 @@ public class LSHRunner {
 
 	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
-	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 1000;
+	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 100;
 	private static int SPARSITY = 10;
 	private static int SIMULATION_VECTOR_VALUE_SPACE = 100;
 	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.15;
@@ -171,6 +171,152 @@ public class LSHRunner {
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void runSimulationBenchmark(boolean loadSimulationInputFile) {
+	
+		FeatureVector<? extends Number> searchVector = null;
+		Set<FeatureVector<? extends Number>> inputVectors = null;
+		if (loadSimulationInputFile) {
+			try {
+				logger.trace(
+						"simulation started - started loading of random feature vectors from file %s",
+						INPUT_VECTORS_OUT_FILE);
+				FileInputStream fis = new FileInputStream(
+						INPUT_VECTORS_OUT_FILE);
+				ObjectInputStream o = new ObjectInputStream(fis);
+				searchVector = (FeatureVector<? extends Number>) o.readObject();
+				inputVectors = (Set<FeatureVector<? extends Number>>) o
+						.readObject();
+				o.close();
+				DIMENSIONS_OF_SIMULATION_VECTORS = searchVector
+						.getDimensionality();
+				NUMBER_OF_SIMULATION_VECTORS = inputVectors.size();
+				logger.trace("simulation started - finished loading of random feature vectors");
+	
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			logger.trace("simulation started - started generation of random feature vectors");
+			Integer[] searchVectorValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
+			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
+				if (rnd.nextInt(SPARSITY + 1) % SPARSITY == 0) {
+					searchVectorValues[j] = rnd
+							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
+				}
+			}
+			//searchVector = new PrimitiveMapFeatureVector<Integer>(-1l,
+				//	searchVectorValues);
+			 searchVector = new NumberListFeatureVector<Integer>(-1l,
+			 searchVectorValues);
+	
+			inputVectors = generateSimulationVectors(searchVectorValues);
+			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= STORAGE_THRESHOLD) {
+				try {
+					FileOutputStream fos;
+					fos = new FileOutputStream((new Date()).toString() + "_dim"
+							+ DIMENSIONS_OF_SIMULATION_VECTORS + "_#"
+							+ NUMBER_OF_SIMULATION_VECTORS + "_#c"
+							+ NUMBER_OF_SIMULATION_VECTORS_CLOSE);
+					ObjectOutputStream o = new ObjectOutputStream(fos);
+					o.writeObject(searchVector);
+					o.writeObject(inputVectors);
+					o.close();
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			logger.trace("simulation started - finished generation of random feature vectors");
+		}
+	
+		List<Pair<Double, Long>> neighbours = LSH
+				.computeNeighbours(searchVector, inputVectors,
+						SIMILARITY_THRESHOLD, NTHREADS,
+						CHUNK_SIZE_CLASSIFIER_WORKER,
+						NUMBER_OF_RANDOM_VECTORS_d, NUMBER_OF_PERMUTATIONS_q,
+						WINDOW_SIZE_B);
+	
+		for (Pair<Double, Long> match : neighbours) {
+			logger.info(match.getValue() + " : " + match.getKey());
+		}
+	
+		Set<Long> remaining = new HashSet<Long>();
+		for (Long i = 0l; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
+			remaining.add(i);
+		}
+		Set<Long> falsePositives = new HashSet<Long>();
+	
+		for (Pair<Double, Long> match : neighbours) {
+			if (!remaining.remove(match.getValue())) {
+				falsePositives.add(match.getValue());
+			}
+		}
+	
+		logger.trace("%s of %s close vectors have been found",
+				NUMBER_OF_SIMULATION_VECTORS_CLOSE - remaining.size(),
+				NUMBER_OF_SIMULATION_VECTORS_CLOSE);
+		logger.trace(remaining);
+	
+		logger.trace("%s false positives have been found",
+				falsePositives.size());
+		logger.trace(falsePositives);
+	}
+
+	private static Set<FeatureVector<? extends Number>> generateSimulationVectors(
+			Integer[] searchVectorValues) {
+		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
+		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
+			Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
+			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
+				int variance = (int) (SIMULATION_VECTOR_VALUE_SPACE * VARIANCE_OF_SIMULATION_VECTORS_CLOSE);
+				if (searchVectorValues[j] != null) {
+					closeValueFeatureValues[j] = searchVectorValues[j]
+							- rnd.nextInt(variance) + rnd.nextInt(variance);
+				} else {
+					if (rnd.nextInt(SPARSITY * SPARSITY + 1) % SPARSITY
+							* SPARSITY == 0) {
+						closeValueFeatureValues[j] = -rnd.nextInt(variance)
+								+ rnd.nextInt(variance);
+					}
+				}
+	
+			}
+			//FeatureVector<? extends Number> closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
+				//	(long)inputVectors.size(), closeValueFeatureValues);
+			 FeatureVector<? extends Number> closeValueFeatureVector = new
+			 NumberListFeatureVector<Integer>(
+			 (long) inputVectors.size(), closeValueFeatureValues);
+			inputVectors.add(closeValueFeatureVector);
+		}
+	
+		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS; i++) {
+			Integer[] randomFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
+			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
+				if (rnd.nextInt(SPARSITY + 1) % SPARSITY == 0) {
+					randomFeatureValues[j] = rnd
+							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
+				}
+			}
+			//FeatureVector<? extends Number> randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
+				//	(long)inputVectors.size(), randomFeatureValues);
+			FeatureVector<? extends Number> randomFeatureVector = new NumberListFeatureVector<Integer>(
+					(long)inputVectors.size(), randomFeatureValues);
+			inputVectors.add(randomFeatureVector);
+		}
+		return inputVectors;
 	}
 
 	@SuppressWarnings("static-access")
@@ -327,149 +473,5 @@ public class LSHRunner {
 			INPUT_VECTORS_OUT_FILE = line
 					.getOptionValue("loadSimulationInputFile");
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private static void runSimulationBenchmark(boolean loadSimulationInputFile) {
-
-		FeatureVector<? extends Number> searchVector = null;
-		Set<FeatureVector<? extends Number>> inputVectors = null;
-		if (loadSimulationInputFile) {
-			try {
-				logger.trace(
-						"simulation started - started loading of random feature vectors from file %s",
-						INPUT_VECTORS_OUT_FILE);
-				FileInputStream fis = new FileInputStream(
-						INPUT_VECTORS_OUT_FILE);
-				ObjectInputStream o = new ObjectInputStream(fis);
-				searchVector = (FeatureVector<? extends Number>) o.readObject();
-				inputVectors = (Set<FeatureVector<? extends Number>>) o
-						.readObject();
-				o.close();
-				DIMENSIONS_OF_SIMULATION_VECTORS = searchVector
-						.getDimensionality();
-				NUMBER_OF_SIMULATION_VECTORS = inputVectors.size();
-				logger.trace("simulation started - finished loading of random feature vectors");
-
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			logger.trace("simulation started - started generation of random feature vectors");
-			Integer[] searchVectorValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
-			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-				if (rnd.nextInt(SPARSITY + 1) % SPARSITY == 0) {
-					searchVectorValues[j] = rnd
-							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
-				}
-			}
-			//searchVector = new PrimitiveMapFeatureVector<Integer>(-1l,
-				//	searchVectorValues);
-			 searchVector = new NumberListFeatureVector<Integer>(-1l,
-			 searchVectorValues);
-
-			inputVectors = generateSimulationVectors(searchVectorValues);
-			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= STORAGE_THRESHOLD) {
-				try {
-					FileOutputStream fos;
-					fos = new FileOutputStream((new Date()).toString() + "_dim"
-							+ DIMENSIONS_OF_SIMULATION_VECTORS + "_#"
-							+ NUMBER_OF_SIMULATION_VECTORS + "_#c"
-							+ NUMBER_OF_SIMULATION_VECTORS_CLOSE);
-					ObjectOutputStream o = new ObjectOutputStream(fos);
-					o.writeObject(searchVector);
-					o.writeObject(inputVectors);
-					o.close();
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			logger.trace("simulation started - finished generation of random feature vectors");
-		}
-
-		List<Pair<Double, Long>> neighbours = LSH
-				.computeNeighbours(searchVector, inputVectors,
-						SIMILARITY_THRESHOLD, NTHREADS,
-						CHUNK_SIZE_CLASSIFIER_WORKER,
-						NUMBER_OF_RANDOM_VECTORS_d, NUMBER_OF_PERMUTATIONS_q,
-						WINDOW_SIZE_B);
-
-		for (Pair<Double, Long> match : neighbours) {
-			logger.info(match.getValue() + " : " + match.getKey());
-		}
-
-		Set<Integer> remaining = new HashSet<Integer>();
-		for (Integer i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
-			remaining.add(i);
-		}
-		Set<Long> falsePositives = new HashSet<Long>();
-
-		for (Pair<Double, Long> match : neighbours) {
-			if (!remaining.remove(match.getValue())) {
-				falsePositives.add(match.getValue());
-			}
-		}
-
-		logger.trace("%s of %s close vectors have been found",
-				NUMBER_OF_SIMULATION_VECTORS_CLOSE - remaining.size(),
-				NUMBER_OF_SIMULATION_VECTORS_CLOSE);
-		logger.trace(remaining);
-
-		logger.trace("%s false positives have been found",
-				falsePositives.size());
-		logger.trace(falsePositives);
-	}
-
-	private static Set<FeatureVector<? extends Number>> generateSimulationVectors(
-			Integer[] searchVectorValues) {
-		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
-		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
-			Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
-			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-				int variance = (int) (SIMULATION_VECTOR_VALUE_SPACE * VARIANCE_OF_SIMULATION_VECTORS_CLOSE);
-				if (searchVectorValues[j] != null) {
-					closeValueFeatureValues[j] = searchVectorValues[j]
-							- rnd.nextInt(variance) + rnd.nextInt(variance);
-				} else {
-					if (rnd.nextInt(SPARSITY * SPARSITY + 1) % SPARSITY
-							* SPARSITY == 0) {
-						closeValueFeatureValues[j] = -rnd.nextInt(variance)
-								+ rnd.nextInt(variance);
-					}
-				}
-
-			}
-			//FeatureVector<? extends Number> closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
-				//	(long)inputVectors.size(), closeValueFeatureValues);
-			 FeatureVector<? extends Number> closeValueFeatureVector = new
-			 NumberListFeatureVector<Integer>(
-			 (long) inputVectors.size(), closeValueFeatureValues);
-			inputVectors.add(closeValueFeatureVector);
-		}
-
-		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS; i++) {
-			Integer[] randomFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
-			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
-				if (rnd.nextInt(SPARSITY + 1) % SPARSITY == 0) {
-					randomFeatureValues[j] = rnd
-							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
-				}
-			}
-			FeatureVector<? extends Number> randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
-					(long)inputVectors.size(), randomFeatureValues);
-			inputVectors.add(randomFeatureVector);
-		}
-		return inputVectors;
 	}
 }
