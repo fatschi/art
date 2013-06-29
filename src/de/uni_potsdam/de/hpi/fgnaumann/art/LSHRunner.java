@@ -37,7 +37,7 @@ public class LSHRunner {
 	private static Logger logger = LogManager
 			.getFormatterLogger(LSHRunner.class.getName());
 
-	private static double SIMILARITY_THRESHOLD = 0.05d;
+	private static double SIMILARITY_THRESHOLD = 0.32d;
 	private static int TOP_K = 5;
 
 	private static int CORES = Runtime.getRuntime().availableProcessors();
@@ -166,6 +166,10 @@ public class LSHRunner {
 		List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
 				searchVector, inputVectors, SIMILARITY_THRESHOLD, TOP_K,
 				NTHREADS, NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
+//		List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
+//				searchVector, inputVectors, SIMILARITY_THRESHOLD, NTHREADS,
+//				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d,
+//				NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());

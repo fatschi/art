@@ -36,7 +36,15 @@ public class LSH {
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			double maxDistance, int topK, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
-
+		FeatureVector<? extends Number> exampleVector;
+		Iterator<FeatureVector<? extends Number>> inputVectorsIterator = inputVectors
+				.iterator();
+		if (inputVectorsIterator.hasNext()) {
+			exampleVector = inputVectorsIterator.next();
+		} else {
+			throw new IllegalArgumentException(
+					"Your input vectors seem to be empty.");
+		}
 		// step 4 of paper: random permutation of bit vectors and window lookup
 		// for hamming distance calculation
 		logger.trace("started creation of random permutations");
@@ -44,7 +52,7 @@ public class LSH {
 		PermutationGenerator permutationGenerator = new FisherYates();
 		for (int i = 0; i < NUMBER_OF_PERMUTATIONS_q; i++) {
 			randomPermutations.add(permutationGenerator
-					.generateRandomPermutation(NUMBER_OF_PERMUTATIONS_q));
+					.generateRandomPermutation(exampleVector.getDimensionality()));
 		}
 		logger.trace("finished creation of random permutations");
 
