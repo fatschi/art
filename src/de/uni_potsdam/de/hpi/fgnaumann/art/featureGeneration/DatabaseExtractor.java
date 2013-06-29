@@ -67,7 +67,7 @@ public class DatabaseExtractor {
 	static public Pattern multiline    = Pattern.compile("\n");
 	static public int PPLEN = new String("Previous Page").length();
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
-	static private long LIMIT = 10000;
+	static private long LIMIT = 1000;
 
 	public static void main(String[] args) {
 

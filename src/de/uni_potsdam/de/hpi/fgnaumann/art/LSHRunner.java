@@ -26,7 +26,6 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.lsh.LSH;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 public class LSHRunner {
@@ -40,7 +39,7 @@ public class LSHRunner {
 
 	private static double SIMILARITY_THRESHOLD = 0.05d;
 	private static int TOP_K = 5;
-	
+
 	private static int CORES = Runtime.getRuntime().availableProcessors();
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
@@ -75,9 +74,12 @@ public class LSHRunner {
 				runSimulationBenchmark(line
 						.hasOption("loadSimulationInputFile"));
 
-			} else if (line.hasOption("loadVectorFile") && line.hasOption("searchVectorId")) {
-				runSearch(line.getOptionValue("loadVectorFile"), line.getOptionValue("searchVectorId"));
-			} else if (line.hasOption("loadVectorFile") && !line.hasOption("searchVectorId")) {
+			} else if (line.hasOption("loadVectorFile")
+					&& line.hasOption("searchVectorId")) {
+				runSearch(line.getOptionValue("loadVectorFile"),
+						line.getOptionValue("searchVectorId"));
+			} else if (line.hasOption("loadVectorFile")
+					&& !line.hasOption("searchVectorId")) {
 				runLSH(line.getOptionValue("loadVectorFile"));
 			}
 		} catch (ParseException exp) {
@@ -85,14 +87,13 @@ public class LSHRunner {
 			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private static void runLSH(String inputFilePath) {
 		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
 		try {
 			logger.info("loading data");
-			FileInputStream fis = new FileInputStream(
-					inputFilePath);
+			FileInputStream fis = new FileInputStream(inputFilePath);
 			ObjectInputStream o = new ObjectInputStream(fis);
 			inputVectors = (Set<FeatureVector<? extends Number>>) o
 					.readObject();
@@ -109,9 +110,9 @@ public class LSHRunner {
 			e.printStackTrace();
 		}
 
-		inputVectors = LSH
-				.computeLSH(inputVectors, NTHREADS, CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d);
-		
+		inputVectors = LSH.computeLSH(inputVectors, NTHREADS,
+				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d);
+
 		try {
 			FileOutputStream fos;
 			fos = new FileOutputStream(inputFilePath);
@@ -133,22 +134,22 @@ public class LSHRunner {
 		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
 		try {
 			logger.info("loading data");
-			FileInputStream fis = new FileInputStream(
-					inputFilePath);
+			FileInputStream fis = new FileInputStream(inputFilePath);
 			ObjectInputStream o = new ObjectInputStream(fis);
 			inputVectors = (Set<FeatureVector<? extends Number>>) o
 					.readObject();
 			o.close();
 			logger.info("loaded data, looking for search vector");
-			for(FeatureVector<? extends Number> featureVector : inputVectors){
-				if(featureVector.getId().equals(Long.valueOf(searchVectorId))){
-					searchVector=featureVector;
+			for (FeatureVector<? extends Number> featureVector : inputVectors) {
+				if (featureVector.getId().equals(Long.valueOf(searchVectorId))) {
+					searchVector = featureVector;
 					break;
 				}
 			}
 			logger.info("search vector found, starting LSH lookup.");
-			if(searchVector==null){
-				throw new IllegalArgumentException("the given search vector id was not found!");
+			if (searchVector == null) {
+				throw new IllegalArgumentException(
+						"the given search vector id was not found!");
 			}
 
 		} catch (FileNotFoundException e) {
@@ -162,11 +163,9 @@ public class LSHRunner {
 			e.printStackTrace();
 		}
 
-		List<Pair<Double, Long>> neighbours = LSH
-				.computeNeighbours(searchVector, inputVectors,
-						SIMILARITY_THRESHOLD, TOP_K, NTHREADS,
-						NUMBER_OF_PERMUTATIONS_q,
-						WINDOW_SIZE_B);
+		List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
+				searchVector, inputVectors, SIMILARITY_THRESHOLD, TOP_K,
+				NTHREADS, NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());
@@ -175,7 +174,7 @@ public class LSHRunner {
 
 	@SuppressWarnings("unchecked")
 	private static void runSimulationBenchmark(boolean loadSimulationInputFile) {
-	
+
 		FeatureVector<? extends Number> searchVector = null;
 		Set<FeatureVector<? extends Number>> inputVectors = null;
 		if (loadSimulationInputFile) {
@@ -194,7 +193,7 @@ public class LSHRunner {
 						.getDimensionality();
 				NUMBER_OF_SIMULATION_VECTORS = inputVectors.size();
 				logger.trace("simulation started - finished loading of random feature vectors");
-	
+
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -214,11 +213,11 @@ public class LSHRunner {
 							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 				}
 			}
-			//searchVector = new PrimitiveMapFeatureVector<Integer>(-1l,
-				//	searchVectorValues);
-			 searchVector = new NumberListFeatureVector<Integer>(-1l,
-			 searchVectorValues);
-	
+			searchVector = new PrimitiveMapFeatureVector<Integer>(-1l,
+					searchVectorValues);
+			// searchVector = new NumberListFeatureVector<Integer>(-1l,
+			// searchVectorValues);
+
 			inputVectors = generateSimulationVectors(searchVectorValues);
 			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= STORAGE_THRESHOLD) {
 				try {
@@ -241,35 +240,33 @@ public class LSHRunner {
 			}
 			logger.trace("simulation started - finished generation of random feature vectors");
 		}
-	
-		List<Pair<Double, Long>> neighbours = LSH
-				.computeNeighbours(searchVector, inputVectors,
-						SIMILARITY_THRESHOLD, NTHREADS,
-						CHUNK_SIZE_CLASSIFIER_WORKER,
-						NUMBER_OF_RANDOM_VECTORS_d, NUMBER_OF_PERMUTATIONS_q,
-						WINDOW_SIZE_B);
-	
+
+		List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
+				searchVector, inputVectors, SIMILARITY_THRESHOLD, NTHREADS,
+				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d,
+				NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
+
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());
 		}
-	
+
 		Set<Long> remaining = new HashSet<Long>();
 		for (Long i = 0l; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
 			remaining.add(i);
 		}
 		Set<Long> falsePositives = new HashSet<Long>();
-	
+
 		for (Pair<Double, Long> match : neighbours) {
 			if (!remaining.remove(match.getValue())) {
 				falsePositives.add(match.getValue());
 			}
 		}
-	
+
 		logger.trace("%s of %s close vectors have been found",
 				NUMBER_OF_SIMULATION_VECTORS_CLOSE - remaining.size(),
 				NUMBER_OF_SIMULATION_VECTORS_CLOSE);
 		logger.trace(remaining);
-	
+
 		logger.trace("%s false positives have been found",
 				falsePositives.size());
 		logger.trace(falsePositives);
@@ -292,16 +289,16 @@ public class LSHRunner {
 								+ rnd.nextInt(variance);
 					}
 				}
-	
+
 			}
-			//FeatureVector<? extends Number> closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
-				//	(long)inputVectors.size(), closeValueFeatureValues);
-			 FeatureVector<? extends Number> closeValueFeatureVector = new
-			 NumberListFeatureVector<Integer>(
-			 (long) inputVectors.size(), closeValueFeatureValues);
+			FeatureVector<? extends Number> closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
+					(long) inputVectors.size(), closeValueFeatureValues);
+			// FeatureVector<? extends Number> closeValueFeatureVector = new
+			// NumberListFeatureVector<Integer>(
+			// (long) inputVectors.size(), closeValueFeatureValues);
 			inputVectors.add(closeValueFeatureVector);
 		}
-	
+
 		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS; i++) {
 			Integer[] randomFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {
@@ -310,10 +307,11 @@ public class LSHRunner {
 							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 				}
 			}
-			//FeatureVector<? extends Number> randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
-				//	(long)inputVectors.size(), randomFeatureValues);
-			FeatureVector<? extends Number> randomFeatureVector = new NumberListFeatureVector<Integer>(
-					(long)inputVectors.size(), randomFeatureValues);
+			FeatureVector<? extends Number> randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
+					(long) inputVectors.size(), randomFeatureValues);
+			// FeatureVector<? extends Number> randomFeatureVector = new
+			// NumberListFeatureVector<Integer>(
+			// (long)inputVectors.size(), randomFeatureValues);
 			inputVectors.add(randomFeatureVector);
 		}
 		return inputVectors;
@@ -326,7 +324,7 @@ public class LSHRunner {
 		Option threshold = OptionBuilder.withArgName("threshold").hasArg()
 				.withDescription("the maximum hamming distance")
 				.create("threshold");
-		
+
 		Option topK = OptionBuilder.withArgName("topK").hasArg()
 				.withDescription("the top K nearest neighbours to retrieve")
 				.create("topK");
@@ -391,7 +389,7 @@ public class LSHRunner {
 				.withDescription(
 						"load a pre-computed simulation input file form disk, including inputVectors and searchVector")
 				.create("loadSimulationInputFile");
-		
+
 		Option loadVectorFile = OptionBuilder
 				.withArgName("loadVectorFile")
 				.hasArg()
@@ -418,7 +416,8 @@ public class LSHRunner {
 				.addOption(numberOfSimulationVectorsClose)
 				.addOption(numberOfSimulationVectors).addOption(B).addOption(q)
 				.addOption(d).addOption(chunkSize).addOption(threads)
-				.addOption(threshold).addOption(topK).addOption(help).addOption(simulate);
+				.addOption(threshold).addOption(topK).addOption(help)
+				.addOption(simulate);
 
 	}
 
@@ -428,8 +427,7 @@ public class LSHRunner {
 					.getOptionValue("threshold"));
 		}
 		if (line.hasOption("topK")) {
-			TOP_K = Integer.parseInt(line
-					.getOptionValue("topK"));
+			TOP_K = Integer.parseInt(line.getOptionValue("topK"));
 		}
 		if (line.hasOption("threads")) {
 			NTHREADS = Integer.parseInt(line.getOptionValue("threads"));
