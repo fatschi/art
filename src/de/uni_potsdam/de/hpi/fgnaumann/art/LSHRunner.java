@@ -38,7 +38,7 @@ public class LSHRunner {
 	private static Logger logger = LogManager
 			.getFormatterLogger(LSHRunner.class.getName());
 
-	private static double SIMILARITY_THRESHOLD = 1.0d;
+	private static double SIMILARITY_THRESHOLD = 0.05d;
 	private static int TOP_K = 5;
 	
 	private static int CORES = Runtime.getRuntime().availableProcessors();

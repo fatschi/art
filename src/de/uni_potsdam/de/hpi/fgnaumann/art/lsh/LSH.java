@@ -158,23 +158,21 @@ public class LSH {
 			double maxDistance, int NTHREADS, int CHUNK_SIZE_CLASSIFIER_WORKER,
 			int NUMBER_OF_RANDOM_VECTORS_d, int NUMBER_OF_PERMUTATIONS_q,
 			int WINDOW_SIZE_B) {
-
-		// for convenience we add the search vector to the input vectors set
+		
+		//for convenience we add the search vector to the input vectors set
 		inputVectors.add(searchVector);
-
+		
 		// step 2 of paper: generation of random hyperplanes
 		logger.trace("starting generation of random vectors");
 		Set<FeatureVector<? extends Number>> randomVectors = generateRandomWeightVectors(
 				NUMBER_OF_RANDOM_VECTORS_d, searchVector.getDimensionality());
 		logger.trace("finished generation of random vectors");
-
+		
 		// step 3 of paper: classification
 		ExecutorService classifierExecutor = Executors
 				.newFixedThreadPool(NTHREADS);
 
-		logger.trace(
-				"starting assignment of classifier workers to executor with %s threads",
-				NTHREADS);
+		logger.trace("starting assignment of classifier workers to executor with %s threads", NTHREADS);
 		int chunkSize = 0;
 		Set<FeatureVector<? extends Number>> tempSet = new HashSet<FeatureVector<? extends Number>>();
 		int chunkCount = 0;
@@ -207,14 +205,13 @@ public class LSH {
 		}
 		logger.trace("all classification workers finished");
 
-		// step 4 of paper: random permutation of bit vectors and window lookup
-		// for hamming distance calculation
+		// step 4 of paper: random permutation of bit vectors and window lookup for hamming distance calculation
 		logger.trace("started creation of random permutations");
 		Set<int[]> randomPermutations = new HashSet<int[]>();
 		PermutationGenerator permutationGenerator = new FisherYates();
 		for (int i = 0; i < NUMBER_OF_PERMUTATIONS_q; i++) {
 			randomPermutations.add(permutationGenerator
-					.generateRandomPermutation(NUMBER_OF_PERMUTATIONS_q));
+					.generateRandomPermutation(NUMBER_OF_RANDOM_VECTORS_d));
 		}
 		logger.trace("finished creation of random permutations");
 
@@ -251,10 +248,13 @@ public class LSH {
 
 		logger.trace("started filtering of neighbours by threshold");
 		List<Pair<Double, Long>> resultList = new ArrayList<Pair<Double, Long>>();
-		for (Entry<Long, Double> hammingDistances : candidates.entrySet()) {
+		for (Entry<Long, Double> hammingDistances : candidates
+				.entrySet()) {
 			if (hammingDistances.getValue() <= maxDistance) {
-				resultList.add(new ImmutablePair<Double, Long>(hammingDistances
-						.getValue(), hammingDistances.getKey()));
+				resultList
+						.add(new ImmutablePair<Double, Long>(
+								hammingDistances.getValue(), hammingDistances
+										.getKey()));
 			}
 		}
 		logger.trace("finished filtering of neighbours by threshold");
