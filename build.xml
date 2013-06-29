@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="create_run_jar" name="Create Runnable Jar for Project art with libraries in sub-folder">
 	<!--this file was created by Eclipse Runnable JAR Export Wizard-->
 	<!--ANT 1.7 is required                                        -->
@@ -6,35 +6,40 @@
 		<jar destfile="/home/fabian/art/target/lsh.jar">
 			<manifest>
 				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunner" />
-				<attribute name="Class-Path" value=". lib/commons-lang3-3.1.jar lib/guava-14.0.1.jar lib/qtag.jar lib/lingpipe-4.1.0.jar lib/boilerpipe-1.1.0.jar lib/nekohtml-1.9.13.jar lib/xerces-2.9.1.jar lib/commons-collections-3.2.1.jar lib/log4j-api-2.0-beta6.jar lib/log4j-core-2.0-beta6.jar lib/commons-cli-1.2.jar lib/sqlite-jdbc-3.7.2.jar lib/postgresql-9.2-1002.jdbc4.jar lib/fastutil-6.5.4.jar lib/junit.jar lib/org.hamcrest.core_1.1.0.v20090501071000.jar" />
+				<attribute name="Class-Path" value=". foo_lib/commons-lang3-3.1.jar foo_lib/guava-14.0.1.jar foo_lib/qtag.jar foo_lib/lingpipe-4.1.0.jar foo_lib/boilerpipe-1.1.0.jar foo_lib/nekohtml-1.9.13.jar foo_lib/xerces-2.9.1.jar foo_lib/commons-collections-3.2.1.jar foo_lib/log4j-api-2.0-beta6.jar foo_lib/log4j-core-2.0-beta6.jar foo_lib/commons-cli-1.2.jar foo_lib/sqlite-jdbc-3.7.2.jar foo_lib/postgresql-9.2-1002.jdbc4.jar foo_lib/fastutil-6.5.4.jar foo_lib/commons-logging-1.1.jar foo_lib/ws-commons-util-1.0.2.jar foo_lib/xmlrpc-client-3.1.3.jar foo_lib/xmlrpc-common-3.1.3.jar foo_lib/xmlrpc-server-3.1.3.jar foo_lib/junit.jar foo_lib/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
 			</manifest>
 			<fileset dir="/home/fabian/art/bin" />
 		</jar>
 		<jar destfile="/home/fabian/art/target/db.jar">
 			<manifest>
 				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.DatabaseExtractor" />
-				<attribute name="Class-Path" value=". lib/commons-lang3-3.1.jar lib/guava-14.0.1.jar lib/qtag.jar lib/lingpipe-4.1.0.jar lib/boilerpipe-1.1.0.jar lib/nekohtml-1.9.13.jar lib/xerces-2.9.1.jar lib/commons-collections-3.2.1.jar lib/log4j-api-2.0-beta6.jar lib/log4j-core-2.0-beta6.jar lib/commons-cli-1.2.jar lib/sqlite-jdbc-3.7.2.jar lib/postgresql-9.2-1002.jdbc4.jar lib/fastutil-6.5.4.jar lib/junit.jar lib/org.hamcrest.core_1.1.0.v20090501071000.jar" />
+				<attribute name="Class-Path" value=". foo_lib/commons-lang3-3.1.jar foo_lib/guava-14.0.1.jar foo_lib/qtag.jar foo_lib/lingpipe-4.1.0.jar foo_lib/boilerpipe-1.1.0.jar foo_lib/nekohtml-1.9.13.jar foo_lib/xerces-2.9.1.jar foo_lib/commons-collections-3.2.1.jar foo_lib/log4j-api-2.0-beta6.jar foo_lib/log4j-core-2.0-beta6.jar foo_lib/commons-cli-1.2.jar foo_lib/sqlite-jdbc-3.7.2.jar foo_lib/postgresql-9.2-1002.jdbc4.jar foo_lib/fastutil-6.5.4.jar foo_lib/commons-logging-1.1.jar foo_lib/ws-commons-util-1.0.2.jar foo_lib/xmlrpc-client-3.1.3.jar foo_lib/xmlrpc-common-3.1.3.jar foo_lib/xmlrpc-server-3.1.3.jar foo_lib/junit.jar foo_lib/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
 			</manifest>
 			<fileset dir="/home/fabian/art/bin" />
 		</jar>
-		<delete dir="/home/fabian/art/target/lib" />
-		<mkdir dir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/commons-lang3-3.1.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/guava-14.0.1.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/qtag.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/lingpipe-4.1.0.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/boilerpipe-1.1.0.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/nekohtml-1.9.13.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/xerces-2.9.1.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/commons-collections-3.2.1.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/log4j-api-2.0-beta6.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/log4j-core-2.0-beta6.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/commons-cli-1.2.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/sqlite-jdbc-3.7.2.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/postgresql-9.2-1002.jdbc4.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/art/lib/fastutil-6.5.4.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/Desktop/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar" todir="/home/fabian/art/target/lib" />
-		<copy file="/home/fabian/Desktop/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar" todir="/home/fabian/art/target/lib" />
+		<delete dir="C:/Users/i067858/workspace3/foo_lib"/>
+        <mkdir dir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/commons-lang3-3.1.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/guava-14.0.1.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/qtag.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/lingpipe-4.1.0.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/boilerpipe-1.1.0.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/nekohtml-1.9.13.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/xerces-2.9.1.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/commons-collections-3.2.1.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/log4j-api-2.0-beta6.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/log4j-core-2.0-beta6.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/commons-cli-1.2.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/sqlite-jdbc-3.7.2.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/postgresql-9.2-1002.jdbc4.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/fastutil-6.5.4.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/commons-logging-1.1.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/ws-commons-util-1.0.2.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/xmlrpc-client-3.1.3.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/xmlrpc-common-3.1.3.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/art/lib/xmlrpc-server-3.1.3.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/Desktop/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
+        <copy file="C:/Users/i067858/Desktop/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
 		<!-- copy jars to isfet -->
 		<scp file="/home/fabian/art/target/lsh.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa" />
 		<scp file="/home/fabian/art/target/db.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa" />

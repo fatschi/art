@@ -100,7 +100,7 @@ public class DatabaseExtractor {
 				
 				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.lsh");
 				 
-				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
+				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
 				printFeatureVec(tfidfFeatures);
 				 
 			}
@@ -172,7 +172,6 @@ public class DatabaseExtractor {
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
 		for (FeatureVector<Double> featureVec : articleFeatureVecs) {
-			//FIXME 
 			for (int pos = 0; pos < featureVec.getDimensionality(); pos++) {
 				if(featureVec.getValue(pos)==null){
 					continue;
@@ -182,7 +181,7 @@ public class DatabaseExtractor {
 						    (double) termInNumDocsCounts.get(pos));
 				
 				// Update the TF value to the TF IDF value
-				featureVec.setValue(pos, (double) (TF*IDF));
+				featureVec.setValue(pos, (double) (TF*IDF*1000));
 			}
 		}
 		return articleFeatureVecs;
