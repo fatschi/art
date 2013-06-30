@@ -249,7 +249,7 @@ public class CopyOfDatabaseExtractor {
 								
 				// Generate augmentedTF feature vector. Also get IDF counts.
 				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Double>>
-											(Long.parseLong(resultSet.getString("id")),
+											(new Long(Long.parseLong(resultSet.getString("id"))),
 									         nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, fulltext))); 
 			}
 		} catch (Exception e) {

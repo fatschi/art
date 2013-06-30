@@ -430,7 +430,7 @@ public class NounExtractor {
 	 * @param mostFrequentNoun (count of most common feature in the document)
 	 * @return Augmented TF as defined by SMART notation (See Bishop).
 	 */
-	private Double toAugmentedTF(double alpha, double rawFreq, double mostFrequentNoun) {
+	private double toAugmentedTF(double alpha, double rawFreq, double mostFrequentNoun) {
 		return  (alpha  + ((alpha * rawFreq) / 
 				            mostFrequentNoun));
 	}
