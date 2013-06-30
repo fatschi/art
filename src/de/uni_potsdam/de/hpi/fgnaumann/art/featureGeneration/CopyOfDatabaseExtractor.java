@@ -18,7 +18,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,28 +31,21 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 /**
  * 
  * @author Nils R. (TF-IDF Extraction), Fabian T. (SQLITE USAGE)
  *
  */
-public class DatabaseExtractor {
-	
-	private static final int MINIMAL_ARTICLE_LENGTH = 50;
+public class CopyOfDatabaseExtractor {
 
-	private static Logger logger = LogManager
-			.getFormatterLogger(DatabaseExtractor.class.getName());
-	
 	static Options options = null;
 	static String connectionString = null;
+	static String outPath = null;
 	static Connection connection = null;
 	static ResultSet resultSet = null;
 	static Statement statement = null;
@@ -67,7 +60,9 @@ public class DatabaseExtractor {
 	static public Pattern multiline    = Pattern.compile("\n");
 	static public int PPLEN = new String("Previous Page").length();
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
-	static private long LIMIT = 1000;
+	static boolean debug = true; // Print debug info
+			
+    
 
 	public static void main(String[] args) {
 
@@ -85,12 +80,15 @@ public class DatabaseExtractor {
 				// A dump of the most descriptive rss article corpus nouns .
 				HashSet<String> descriptiveNouns = loadFakeCollectionSet();
 				// Verbose
+				if (debug) {
 					for (String globalNoun : descriptiveNouns) {
-						logger.trace(globalNoun);
+						System.out.println(globalNoun);
 					}
-					logger.trace("NOUN#=" + descriptiveNouns.size());
+					System.out.println("NOUN#=" + descriptiveNouns.size());
+				}
 				
-				Set<FeatureVector<Double>> articleFeatureVecs = new HashSet<FeatureVector<Double>>();
+				int LIMIT = 2000;
+				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
 				
@@ -98,20 +96,19 @@ public class DatabaseExtractor {
 				//TFIDF
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 				
-				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.lsh");
+				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
 				 
-				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
+				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
 				printFeatureVec(tfidfFeatures);
 				 
-//				LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
 			}
 		} catch (ParseException exp) {
-			logger.error("Parsing failed.  Reason: " + exp.getMessage());
+			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
 		}
 
 	}
 
-	private static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs, String path) {
+	private static void writeFeatures(LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs, String path) {
 		 try{
 		      //use buffering
 		      OutputStream file = new FileOutputStream(path);
@@ -125,13 +122,12 @@ public class DatabaseExtractor {
 		      }
 		    }  
 		    catch(IOException ex){
-		      logger.error("Cannot perform output." + ex);
+		      System.err.println("Cannot perform output." + ex);
 		    }		
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Set<FeatureVector<? extends Number>> readfeatures(String path) {
-		Set<FeatureVector<? extends Number>> recoveredSet  = null; 
+	public static LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> readfeatures(String path) {
+		LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> recoveredList  = null; 
 		try{
 		      //use buffering
 		      InputStream file = new FileInputStream(path);
@@ -139,26 +135,33 @@ public class DatabaseExtractor {
 		      ObjectInput input = new ObjectInputStream ( buffer );
 		      try{
 		        //deserialize the List
-		    	  recoveredSet = (Set<FeatureVector<? extends Number>>) input.readObject();
+		    	recoveredList = (LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>) input.readObject();
 		      }
 		      finally{
 		        input.close();
 		      }
 		    }
 		    catch(ClassNotFoundException ex){
-		      logger.error("Cannot perform input. Class not found." + ex);
+		      System.err.println("Cannot perform input. Class not found." + ex);
 		    }
 		    catch(IOException ex){
-		    	logger.error("Cannot perform input." + ex);
+		    	System.err.println("Cannot perform input." + ex);
 		    }
-		return recoveredSet;
+		return recoveredList;
 	}
 
 	private static void printFeatureVec(
-			Set<FeatureVector<? extends Number>> recoveredList) {
-		for (FeatureVector<? extends Number> featureVec : recoveredList) {
-			logger.trace(featureVec);
+			LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> recoveredList) {
+		long entries = 0l;
+		for (ImmutablePair<Long, HashMap<Integer, Double>> hashMap : recoveredList) {
+			System.out.print(hashMap.left + "\t");
+			entries += hashMap.right.size(); // Count num features > 0
+			for (Integer pos : hashMap.right.keySet()) {
+				System.out.print(pos + "=" + hashMap.right.get(pos) + ", ");
+			}
+			System.out.println();
 		}
+		System.out.println("Features:" + entries);
 	}
 
 	/**
@@ -168,22 +171,21 @@ public class DatabaseExtractor {
 	 * @param docCount
 	 * @return 
 	 */
-	private static Set<FeatureVector<Double>> augment2TFIDF(
-			Set<FeatureVector<Double>> articleFeatureVecs,
+	private static LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> augment2TFIDF(
+				   LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs,
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
-		for (FeatureVector<Double> featureVec : articleFeatureVecs) {
-			for (int pos = 0; pos < featureVec.getDimensionality(); pos++) {
-				if(featureVec.getValue(pos)==null){
-					continue;
-				}
-				double TF  = featureVec.getValue(pos);
+		for (int i = 0; i!=articleFeatureVecs.size(); ++i) {
+			HashMap<Integer, Double> featureVec = articleFeatureVecs.get(i).right;
+			for (Integer pos : featureVec.keySet()) {
+				double TF  = featureVec.get(pos);
 				double IDF = Math.log((double) docCount/
 						    (double) termInNumDocsCounts.get(pos));
 				
 				// Update the TF value to the TF IDF value
-				featureVec.setValue(pos, (double) (TF*IDF*1000));
+				featureVec.put(pos, (double) (TF*IDF));
 			}
+			articleFeatureVecs.set(i, new ImmutablePair<Long, HashMap<Integer,Double>>(articleFeatureVecs.get(i).left, featureVec) );
 		}
 		return articleFeatureVecs;
 	}
@@ -191,18 +193,19 @@ public class DatabaseExtractor {
 	/**
 	 * Method that counts for every documents its feature counts
 	 */
-	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
+	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
 		/** IDF parts. */
 		long doccount = 0;
 		
 		// Sort the global features so they appear in the same order in ever article feature vector.
 		HashMap<String, Integer> globalFeaturePositionMap = toSortedGlobalFeatureMap(commonNouns);
-		logger.trace(globalFeaturePositionMap);
+		System.out.println(globalFeaturePositionMap);
 		
 		String LIMIT = "";
 		if (limit != -1) {
 			LIMIT = " LIMIT " + limit;
 		}
+		
 		
 		try {
 			if (connectionString.contains("sqlite")) {
@@ -227,8 +230,8 @@ public class DatabaseExtractor {
 			int lines = 0;
 			while (resultSet.next()) {
 				// Feedback
-				if (lines++%1000 ==0) {
-					logger.trace("Processed Lines:" + (lines-1));
+				if (lines++%1000 ==0 && debug) {
+					System.out.println("Processed Lines:" + (lines-1));
 				}
 				
 				// Pattern
@@ -236,17 +239,17 @@ public class DatabaseExtractor {
 				String fulltext = resultSet.getString("cleaned_text");
 				
 				// Skip articles that have no content.
-				if(fulltext==null || fulltext.length() < MINIMAL_ARTICLE_LENGTH) {
+				if(fulltext==null || fulltext.length() < 50) {
 					continue;
 				}
 				
-				doccount++;
+				++doccount;
 				
 				fulltext = cleanText(fulltext);
 								
 				// Generate augmentedTF feature vector. Also get IDF counts.
-				articleFeatureVecs.add(new PrimitiveMapFeatureVector<Double>
-											(Long.parseLong(resultSet.getString("id")), globalFeaturePositionMap.size(),
+				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Double>>
+											(Long.parseLong(resultSet.getString("id")),
 									         nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, fulltext))); 
 			}
 		} catch (Exception e) {
@@ -309,6 +312,66 @@ public class DatabaseExtractor {
 		return mspace.replaceAll(" ").trim();
 	}
 
+	private static void connectAndDoSomething() {
+		HashMap<String, Long> collectionMap = new HashMap<String, Long>(1000, 0.95f);
+		try {
+			if (connectionString.contains("sqlite")) {
+				Class.forName("org.sqlite.JDBC");
+			} else if (connectionString.contains("postgresql")) {
+				Class.forName("org.postgresql.Driver");
+			} else {
+				throw new IllegalArgumentException(
+						"There is no known DBMS for your given connection string: "
+								+ connectionString);
+			}
+
+			connection = DriverManager
+					.getConnection(connectionString);
+			statement = connection.createStatement();
+			resultSet = statement
+					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
+			
+			
+			// Create nounextraction object
+			NounExtractor nE = new NounExtractor();
+			int lines = 0;
+			while (resultSet.next()) {
+//				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
+				
+				// Pattern
+				// Ends with. previous page
+				String fulltext = resultSet.getString("cleaned_text");
+				// Skip articles that have no content.
+				if(fulltext==null || fulltext.length() < 50) {
+					continue;
+				}
+				
+				// Feedback
+				if (lines++%1000 ==0 && debug) {
+					System.out.println("Processed Lines:" + (lines-1));
+				}
+				
+				fulltext = cleanText(fulltext);
+				
+				addNeededNouns(collectionMap, fulltext, nE); // Modifies the input map
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				resultSet.close();
+				statement.close();
+				connection.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		for (String globalNoun : collectionMap.keySet()) {
+			System.out.println(globalNoun + ":" + collectionMap.get(globalNoun));
+		} 
+		System.out.println("NOUN#=" + collectionMap.size());
+	}
+
 	/**
 	 * Extends the global map by a list of at most one new noun needed to describe ONE article.
 	 * At most, because the map gets no adds if it already contains at least ONE noun that is 
@@ -317,7 +380,6 @@ public class DatabaseExtractor {
 	 * @param fulltext
 	 * @param nE
 	 */
-	@SuppressWarnings("unused")
 	private static void addNeededNouns(HashMap<String, Long> collectionMap, String fulltext, NounExtractor nE) {
 		// Extract nouns
 		long max = -1l;
@@ -346,7 +408,6 @@ public class DatabaseExtractor {
 		
 	}
 
-	@SuppressWarnings("unused")
 	private static HashSet<String> getDescriptiveNouns() {
 		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
 		try {
@@ -371,6 +432,7 @@ public class DatabaseExtractor {
 			NounExtractor nE = new NounExtractor();
 			int lines = 0;
 			while (resultSet.next()) {
+//				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
 				
 				// Pattern
 				// Ends with. previous page
@@ -381,8 +443,8 @@ public class DatabaseExtractor {
 				}
 				
 				// Feedback
-				if (lines++%1000 ==0) {
-					logger.trace("Processed Lines:" + (lines-1));
+				if (lines++%1000 ==0 && debug) {
+					System.out.println("Processed Lines:" + (lines-1));
 				}
 	
 				fulltext = cleanText(fulltext);
@@ -471,6 +533,12 @@ public class DatabaseExtractor {
 			formatter.printHelp("DatabaseExtractor", options);
 			return false;
 		}
+		if (line.hasOption("out")) {
+			outPath = line.getOptionValue("out");
+		} /*else {
+			System.err.println("ERROR: NO OUTPATH SPECIFIED");
+			return false;
+		}*/
 		return true;
 	}
 	

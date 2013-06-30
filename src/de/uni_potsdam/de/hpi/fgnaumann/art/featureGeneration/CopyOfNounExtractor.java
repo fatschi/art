@@ -31,7 +31,7 @@ import de.l3s.boilerpipe.extractors.ArticleExtractor;
  * 
  * @author Nils Rethmeier
  */
-public class NounExtractor {
+public class CopyOfNounExtractor {
 
 	static final TokenizerFactory TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
 	static final SentenceModel SENTENCE_MODEL = new MedlineSentenceModel();
@@ -45,7 +45,7 @@ public class NounExtractor {
 	static final int LINES_TO_BUFFER = 100;
 	private Tagger tagger = null; // .mat ending is implicit
 
-	public NounExtractor() throws IOException {
+	public CopyOfNounExtractor() throws IOException {
 		tagger = new Tagger("lib/english");
 	}
 
@@ -56,7 +56,7 @@ public class NounExtractor {
 	 * @param bufr
 	 * @throws IOException
 	 */
-	public NounExtractor(BufferedReader bufr) throws IOException {
+	public CopyOfNounExtractor(BufferedReader bufr) throws IOException {
 		@SuppressWarnings("unused")
 		Tagger tagger = new Tagger("lib/english");
 		BR = bufr;
@@ -85,7 +85,7 @@ public class NounExtractor {
 		args[0] = "/media/zwerg/art/rss_article.sql.earaseEndingToUse";
 		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(args[0] + "__Nouns.txt"), "ascii"));
-		NounExtractor nE = new NounExtractor(makeReader(args[0]));
+		CopyOfNounExtractor nE = new CopyOfNounExtractor(makeReader(args[0]));
 		String page = null;
 		long count = 0;
 		try { // Note: The first line in the results might be database clutter
@@ -456,7 +456,7 @@ public class NounExtractor {
 		// extractFullTextCorpus(args);
 		// String path = "TestDocs/POSparseTest.txt";
 		String path = "/media/zwerg/art/rss_article.sql_Nouns.txt";
-		NounExtractor nE = new NounExtractor();
+		CopyOfNounExtractor nE = new CopyOfNounExtractor();
 		nE.extractNounsAndStoreToFile(path);
 	}
 }

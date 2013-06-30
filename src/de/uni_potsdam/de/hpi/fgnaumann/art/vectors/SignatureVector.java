@@ -9,8 +9,8 @@ public interface SignatureVector extends Vector<Bit>, Comparable<SignatureVector
 
 	SignatureVector permute(int[] randomPermutation);
 
-	FeatureVector<? extends Number> getParentVector();
-
 	ComparableBitSet getValuesAsBitSet();
+
+	Long getParentVectorId();
 
 }

@@ -6,8 +6,8 @@ import java.util.Set;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 
 public class ClassifierWorker implements Runnable {
-	Set<FeatureVector<? extends Number>> workingChunk = new HashSet<FeatureVector<? extends Number>>();
-	Set<FeatureVector<? extends Number>> randomWeightVectors = new HashSet<FeatureVector<? extends Number>>();
+	private Set<FeatureVector<? extends Number>> workingChunk = new HashSet<FeatureVector<? extends Number>>();
+	private Set<FeatureVector<? extends Number>> randomWeightVectors = new HashSet<FeatureVector<? extends Number>>();
 
 	public ClassifierWorker(Set<FeatureVector<? extends Number>> workingChunk,
 			Set<FeatureVector<? extends Number>> randomWeightVectors) {
