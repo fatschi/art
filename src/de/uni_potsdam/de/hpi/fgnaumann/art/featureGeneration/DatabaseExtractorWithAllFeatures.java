@@ -41,7 +41,7 @@ import de.l3s.boilerpipe.extractors.ArticleExtractor;
  * @author Nils R. (TF-IDF Extraction), Fabian T. (SQLITE USAGE)
  *
  */
-public class DatabaseExtractor {
+public class DatabaseExtractorWithAllFeatures {
 
 	static Options options = null;
 	static String connectionString = null;
@@ -62,7 +62,6 @@ public class DatabaseExtractor {
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
 	static boolean debug = true; // Print debug info
 			
-    
 
 	public static void main(String[] args) {
 
@@ -103,7 +102,6 @@ public class DatabaseExtractor {
 		} catch (ParseException exp) {
 			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
 		}
-
 	}
 
 	private static void writeFeatures(LinkedList<ImmutablePair<Long, HashMap<Integer, Float>>> articleFeatureVecs, String path) {
@@ -249,7 +247,6 @@ public class DatabaseExtractor {
 				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Float>>
 											(Long.parseLong(resultSet.getString("id")),
 									         nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, fulltext))); 
-				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -425,7 +422,6 @@ public class DatabaseExtractor {
 			statement = connection.createStatement();
 			resultSet = statement
 					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
-			
 			
 			// Create nounextraction object
 			NounExtractor nE = new NounExtractor();
