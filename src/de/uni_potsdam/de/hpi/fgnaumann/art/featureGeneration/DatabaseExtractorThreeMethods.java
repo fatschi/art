@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -35,25 +34,16 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 /**
  * 
  * @author Nils R. (TF-IDF Extraction), Fabian T. (SQLITE USAGE)
  *
  */
-public class AllFeaturesDatabaseExtractor {
-	
-	private static final int MINIMAL_ARTICLE_LENGTH = 50;
-
-	private static Logger logger = LogManager
-			.getFormatterLogger(DatabaseExtractor.class.getName());
+public class DatabaseExtractorThreeMethods {
 
 	static Options options = null;
 	static String connectionString = null;
@@ -113,18 +103,36 @@ public class AllFeaturesDatabaseExtractor {
 				
 				// Test 3
 				HashSet<String> descriptiveNouns = null; // reset
-				descriptiveNouns = getAllNouns(FeatureType.BEST_WORST_N, 2, LIMIT);		  // Get all nouns from the corpus
+				descriptiveNouns = getAllNouns(FeatureType.ALL, -1, LIMIT);		  // Get all nouns from the corpus
 				if (debug) {System.out.println("NOUN#=" + descriptiveNouns.size());}
-				Set<FeatureVector<Double>> articleFeatureVecs = new HashSet<FeatureVector<Double>>();
+				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());			
 				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
 				//TFIDF
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
+				descriptiveNouns = null; articleFeatureVecs = null; termInNumDocsCounts= null;// reset
 				
-				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
+				// A dump of the most descriptive rss article corpus nouns .
+//				HashSet<String> descriptiveNouns = loadFakeCollectionSet();
+				// Verbose
+//				if (debug) {
+//					for (String globalNoun : descriptiveNouns) {
+//						System.out.println(globalNoun);
+//					}
+//					System.out.println("NOUN#=" + descriptiveNouns.size());
+//				}
+								
+				
+//				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
+//				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
+//				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
+//				//TFIDF
+//				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
+
+//				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
 				 
-				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
-				printFeatureVec(tfidfFeatures);
+//				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.ser");
+//				printFeatureVec(tfidfFeatures);
 				 
 			}
 		} catch (ParseException exp) {
@@ -133,7 +141,7 @@ public class AllFeaturesDatabaseExtractor {
 
 	}
 
-	private static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs, String path) {
+	private static void writeFeatures(LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs, String path) {
 		 try{
 		      //use buffering
 		      OutputStream file = new FileOutputStream(path);
@@ -147,13 +155,12 @@ public class AllFeaturesDatabaseExtractor {
 		      }
 		    }  
 		    catch(IOException ex){
-		      logger.error("Cannot perform output." + ex);
+		      System.err.println("Cannot perform output." + ex);
 		    }		
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Set<FeatureVector<? extends Number>> readfeatures(String path) {
-		Set<FeatureVector<? extends Number>> recoveredSet  = null; 
+	public static LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> readfeatures(String path) {
+		LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> recoveredList  = null; 
 		try{
 		      //use buffering
 		      InputStream file = new FileInputStream(path);
@@ -161,26 +168,33 @@ public class AllFeaturesDatabaseExtractor {
 		      ObjectInput input = new ObjectInputStream ( buffer );
 		      try{
 		        //deserialize the List
-		    	  recoveredSet = (Set<FeatureVector<? extends Number>>) input.readObject();
+		    	recoveredList = (LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>) input.readObject();
 		      }
 		      finally{
 		        input.close();
 		      }
 		    }
 		    catch(ClassNotFoundException ex){
-		      logger.error("Cannot perform input. Class not found." + ex);
+		      System.err.println("Cannot perform input. Class not found." + ex);
 		    }
 		    catch(IOException ex){
-		    	logger.error("Cannot perform input." + ex);
+		    	System.err.println("Cannot perform input." + ex);
 		    }
-		return recoveredSet;
+		return recoveredList;
 	}
 
 	private static void printFeatureVec(
-			Set<FeatureVector<? extends Number>> recoveredList) {
-		for (FeatureVector<? extends Number> featureVec : recoveredList) {
-			logger.trace(featureVec);
+			LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> recoveredList) {
+		long entries = 0l;
+		for (ImmutablePair<Long, HashMap<Integer, Double>> hashMap : recoveredList) {
+			System.out.print(hashMap.left + "\t");
+			entries += hashMap.right.size(); // Count num features > 0
+			for (Integer pos : hashMap.right.keySet()) {
+				System.out.print(pos + "=" + hashMap.right.get(pos) + ", ");
+			}
+			System.out.println();
 		}
+		System.out.println("Features:" + entries);
 	}
 
 	/**
@@ -190,22 +204,21 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param docCount
 	 * @return 
 	 */
-	private static Set<FeatureVector<Double>> augment2TFIDF(
-			Set<FeatureVector<Double>> articleFeatureVecs,
+	private static LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> augment2TFIDF(
+				   LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs,
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
-		for (FeatureVector<Double> featureVec : articleFeatureVecs) {
-			for (int pos = 0; pos < featureVec.getDimensionality(); pos++) {
-				if(featureVec.getValue(pos)==null){
-					continue;
-				}
-				double TF  = featureVec.getValue(pos);
+		for (int i = 0; i!=articleFeatureVecs.size(); ++i) {
+			HashMap<Integer, Double> featureVec = articleFeatureVecs.get(i).right;
+			for (Integer pos : featureVec.keySet()) {
+				double TF  = featureVec.get(pos);
 				double IDF = Math.log((double) docCount/
 						    (double) termInNumDocsCounts.get(pos));
 				
 				// Update the TF value to the TF IDF value
-				featureVec.setValue(pos, (double) (TF*IDF*1000));
+				featureVec.put(pos, (double) (TF*IDF));
 			}
+			articleFeatureVecs.set(i, new ImmutablePair<Long, HashMap<Integer,Double>>(articleFeatureVecs.get(i).left, featureVec) );
 		}
 		return articleFeatureVecs;
 	}
@@ -213,18 +226,18 @@ public class AllFeaturesDatabaseExtractor {
 	/**
 	 * Method that counts for every documents its feature counts
 	 */
-	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
+	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
 		/** IDF parts. */
 		long doccount = 0;
 		
 		// Sort the global features so they appear in the same order in ever article feature vector.
 		HashMap<String, Integer> globalFeaturePositionMap = toSortedGlobalFeatureMap(commonNouns);
-		logger.trace(globalFeaturePositionMap);
 		
 		String LIMIT = "";
 		if (limit != -1) {
 			LIMIT = " LIMIT " + limit;
 		}
+		
 		
 		try {
 			if (connectionString.contains("sqlite")) {
@@ -249,8 +262,8 @@ public class AllFeaturesDatabaseExtractor {
 			int lines = 0;
 			while (resultSet.next()) {
 				// Feedback
-				if (lines++%1000 ==0) {
-					logger.trace("Processed Lines:" + (lines-1));
+				if (lines++%1000 ==0 && debug) {
+					System.out.println("Processed Lines:" + (lines-1));
 				}
 				
 				// Pattern
@@ -258,17 +271,17 @@ public class AllFeaturesDatabaseExtractor {
 				String fulltext = resultSet.getString("cleaned_text");
 				
 				// Skip articles that have no content.
-				if(fulltext==null || fulltext.length() < MINIMAL_ARTICLE_LENGTH) {
+				if(fulltext==null || fulltext.length() < 50) {
 					continue;
 				}
 				
-				doccount++;
+				++doccount;
 				
 				fulltext = cleanText(fulltext);
 								
 				// Generate augmentedTF feature vector. Also get IDF counts.
-				articleFeatureVecs.add(new PrimitiveMapFeatureVector<Double>
-											(Long.parseLong(resultSet.getString("id")), globalFeaturePositionMap.size(),
+				articleFeatureVecs.add(new ImmutablePair<Long, HashMap<Integer, Double>>
+											(new Long(Long.parseLong(resultSet.getString("id"))),
 									         nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, fulltext))); 
 			}
 		} catch (Exception e) {
