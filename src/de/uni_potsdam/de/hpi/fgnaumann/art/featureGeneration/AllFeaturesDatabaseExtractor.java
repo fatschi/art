@@ -16,9 +16,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,6 +63,10 @@ public class AllFeaturesDatabaseExtractor {
 	static public int PPLEN = new String("Previous Page").length();
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
 	static boolean debug = true; // Print debug info
+	
+	public enum FeatureType {
+	    ALL, BEST_WORST_N, BEST 
+	}
 
 	public static void main(String[] args) {
 
@@ -73,22 +79,30 @@ public class AllFeaturesDatabaseExtractor {
 				formatter.printHelp("LSH", options);
 			}
 			if (evaluateCLIParameters(line)) {
-//				HashSet<String> descriptiveNouns = getDescriptiveNouns(); // Uncomment in case of new corpus
-				HashSet<String> descriptiveNouns = getAllNouns();		  // Get all nouns from the corpus
+				int LIMIT = 1000;
+				HashSet<String> descriptiveNouns = getAllNouns(FeatureType.BEST_WORST_N, 3, LIMIT);		  // Get all nouns from the corpus
+				if (debug) {System.out.println("NOUN#=" + descriptiveNouns.size());}
+				descriptiveNouns = null; // reset
+				descriptiveNouns = getAllNouns(FeatureType.BEST, -1, LIMIT);		  // Get all nouns from the corpus
+				if (debug) {System.out.println("NOUN#=" + descriptiveNouns.size());}
+				descriptiveNouns = null; // reset
+				descriptiveNouns = getAllNouns(FeatureType.ALL, -1, LIMIT);		  // Get all nouns from the corpus
+				if (debug) {System.out.println("NOUN#=" + descriptiveNouns.size());}
+				
 				// A dump of the most descriptive rss article corpus nouns .
 //				HashSet<String> descriptiveNouns = loadFakeCollectionSet();
 				// Verbose
-				if (debug) {
-					for (String globalNoun : descriptiveNouns) {
-						System.out.println(globalNoun);
-					}
-					System.out.println("NOUN#=" + descriptiveNouns.size());
-				}
+//				if (debug) {
+//					for (String globalNoun : descriptiveNouns) {
+//						System.out.println(globalNoun);
+//					}
+//					System.out.println("NOUN#=" + descriptiveNouns.size());
+//				}
 								
-				int LIMIT = 2000;
-				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
-				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
-				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
+				
+//				LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>> articleFeatureVecs = new LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>();
+//				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
+//				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
 				
 //				printFeatureVec(articleFeatureVecs);
 				//TFIDF
@@ -310,65 +324,6 @@ public class AllFeaturesDatabaseExtractor {
 		return mspace.replaceAll(" ").trim();
 	}
 
-	private static void connectAndDoSomething() {
-		HashMap<String, Long> collectionMap = new HashMap<String, Long>(1000, 0.95f);
-		try {
-			if (connectionString.contains("sqlite")) {
-				Class.forName("org.sqlite.JDBC");
-			} else if (connectionString.contains("postgresql")) {
-				Class.forName("org.postgresql.Driver");
-			} else {
-				throw new IllegalArgumentException(
-						"There is no known DBMS for your given connection string: "
-								+ connectionString);
-			}
-
-			connection = DriverManager
-					.getConnection(connectionString);
-			statement = connection.createStatement();
-			resultSet = statement
-					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
-			
-			
-			// Create nounextraction object
-			NounExtractor nE = new NounExtractor();
-			int lines = 0;
-			while (resultSet.next()) {
-//				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
-				
-				// Pattern
-				// Ends with. previous page
-				String fulltext = resultSet.getString("cleaned_text");
-				// Skip articles that have no content.
-				if(fulltext==null || fulltext.length() < 50) {
-					continue;
-				}
-				
-				// Feedback
-				if (lines++%1000 ==0 && debug) {
-					System.out.println("Processed Lines:" + (lines-1));
-				}
-				
-				fulltext = cleanText(fulltext);
-				
-				addNeededNouns(collectionMap, fulltext, nE); // Modifies the input map
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				resultSet.close();
-				statement.close();
-				connection.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		for (String globalNoun : collectionMap.keySet()) {
-			System.out.println(globalNoun + ":" + collectionMap.get(globalNoun));
-		} 
-		System.out.println("NOUN#=" + collectionMap.size());
-	}
 
 	/**
 	 * Extends the global map by a list of at most one new noun needed to describe ONE article.
@@ -378,7 +333,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param fulltext
 	 * @param nE
 	 */
-	private static void addNeededNouns(HashMap<String, Long> collectionMap, String fulltext, NounExtractor nE) {
+	private static void addNeededNouns(HashSet<String> collectionMap, String fulltext, NounExtractor nE) {
 		// Extract nouns
 		long max = -1l;
 		boolean alreadyGlobal = false;
@@ -386,12 +341,8 @@ public class AllFeaturesDatabaseExtractor {
 		String mostFrequentLocal = null;
 		for (String noun: localNouns.keySet()) {
 			noun = noun.toLowerCase();
-			if (collectionMap.containsKey(noun)) {
+			if (collectionMap.contains(noun)) {
 				alreadyGlobal = true;	
-				Long oldCount = collectionMap.get(noun);
-				Long newOccur = localNouns.get(noun);
-				// Update global noun counts
-				collectionMap.put(noun, oldCount + newOccur);
 			} else {
 				// determine most frequent local noun
 				if (localNouns.get(noun) > max) {
@@ -401,12 +352,23 @@ public class AllFeaturesDatabaseExtractor {
 			} 
 		}
 		if (!alreadyGlobal && (mostFrequentLocal!=null)) {
-			collectionMap.put(mostFrequentLocal, max);
+			collectionMap.add(mostFrequentLocal);
 		}
 		
 	}
 
-	private static HashSet<String> getAllNouns() {
+	/**
+	 * Function extracts feature nouns form corpus. 
+	 * There are three types of extraction.
+	 * <p> All nouns = {@link FeatureType.ALL} (i.e. full Zipf <b>nouns-distribution</b>)
+	 * <p> Minimum Set (Every article has at least one entry > 0 => to avoid empty features) = {@link FeatureType.BEST}. This gives the noun Zipf short tail (!= word short tail, which would be stop words)
+	 * <p> Most/Least frequent N nouns per article (Parse Zipf short+long tail). {@link FeatureType.BEST_WORST_N}. Requires to specify an N = numWorstBest
+	 * @param ftype
+	 * @param numWorstBest (only meaningful with {@link FeatureType.BEST_WORST_N})
+	 * @param articleLimit number of articles to process.
+	 * @return The set of collection-wide nouns.
+	 */
+	private static HashSet<String> getAllNouns(FeatureType ftype, int numWorstBest, int articleLimit) {
 		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
 		try {
 			if (connectionString.contains("sqlite")) {
@@ -429,7 +391,7 @@ public class AllFeaturesDatabaseExtractor {
 			// Create nounextraction object
 			NounExtractor nE = new NounExtractor();
 			int lines = 0;
-			while (resultSet.next()) {
+			while (resultSet.next() && (lines!=articleLimit)) {
 //				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
 				
 				// Pattern
@@ -445,8 +407,46 @@ public class AllFeaturesDatabaseExtractor {
 					System.out.println("Processed Lines:" + (lines-1));
 				}
 	
-				for (String noun : nE.getNouns(cleanText(fulltext)).keySet() ) {
-					collectionMap.add(noun);
+				if (ftype==FeatureType.BEST) {
+					addNeededNouns(collectionMap, cleanText(fulltext), nE);
+				}
+				// Add all nouns
+				else if (ftype==FeatureType.ALL ) {
+					for (String noun : nE.getLowercaseNouns(cleanText(fulltext)).keySet() ) {
+						collectionMap.add(noun);
+					}
+				}
+				else if (ftype==FeatureType.BEST_WORST_N ) {
+					HashMap<String, Long> articleNouns = nE.getLowercaseNouns(cleanText(fulltext));
+					ArrayList<Long> nouncounts = new ArrayList<Long>(articleNouns.values());
+					Collections.sort(nouncounts);
+					
+					// Extract the N least and most frequent nouns.
+					HashSet<Long> worstNBestN = new HashSet<Long>(2 * numWorstBest, 1.0f); // Wont get larger anyways
+					int numNouns = nouncounts.size();
+					if (!nouncounts.isEmpty()) {
+						// In case there are too few nouns in an article. Adjust number of bestWorst nouns.
+						numWorstBest = Math.min(numNouns, numWorstBest);
+						// Add Best
+						for (int i = 0; i < numWorstBest; ++i) {
+							worstNBestN.add(nouncounts.get(i));
+						}
+						// Add Worst
+						for (int i = numNouns-1; i > (numNouns-1)-numWorstBest ; --i) {
+							worstNBestN.add(nouncounts.get(i));
+						}
+					}
+					// Extract Article nouns of valid count
+					for (String aNoun : articleNouns.keySet()) {
+						Long aNounCount = articleNouns.get(aNoun);
+						// Add noun if the count fits
+						if (worstNBestN.contains(aNounCount)) {
+							collectionMap.add(aNoun);
+							worstNBestN.remove(aNounCount); // only add one word of this count
+						} if (worstNBestN.isEmpty()) {
+							break; 							// All worst/best words added.
+						}
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -464,63 +464,63 @@ public class AllFeaturesDatabaseExtractor {
 		return collectionMap;
 	}
 	
-	private static HashSet<String> getDescriptiveNouns() {
-		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
-		try {
-			if (connectionString.contains("sqlite")) {
-				Class.forName("org.sqlite.JDBC");
-			} else if (connectionString.contains("postgresql")) {
-				Class.forName("org.postgresql.Driver");
-			} else {
-				throw new IllegalArgumentException(
-						"There is no known DBMS for your given connection string: "
-								+ connectionString);
-			}
-
-			connection = DriverManager
-					.getConnection(connectionString);
-			statement = connection.createStatement();
-			resultSet = statement
-					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
-			
-			
-			// Create nounextraction object
-			NounExtractor nE = new NounExtractor();
-			int lines = 0;
-			while (resultSet.next()) {
-//				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
-				
-				// Pattern
-				// Ends with. previous page
-				String fulltext = resultSet.getString("cleaned_text");
-				// Skip articles that have no content.
-				if(fulltext==null || fulltext.length() < 50) {
-					continue;
-				}
-				
-				// Feedback
-				if (lines++%1000 ==0 && debug) {
-					System.out.println("Processed Lines:" + (lines-1));
-				}
-	
-				fulltext = cleanText(fulltext);
-				
-				getNeededNounSet(collectionMap, fulltext, nE);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				resultSet.close();
-				statement.close();
-				connection.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return collectionMap;
-	}
+//	private static HashSet<String> getDescriptiveNouns() {
+//		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
+//		try {
+//			if (connectionString.contains("sqlite")) {
+//				Class.forName("org.sqlite.JDBC");
+//			} else if (connectionString.contains("postgresql")) {
+//				Class.forName("org.postgresql.Driver");
+//			} else {
+//				throw new IllegalArgumentException(
+//						"There is no known DBMS for your given connection string: "
+//								+ connectionString);
+//			}
+//
+//			connection = DriverManager
+//					.getConnection(connectionString);
+//			statement = connection.createStatement();
+//			resultSet = statement
+//					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
+//			
+//			
+//			// Create nounextraction object
+//			NounExtractor nE = new NounExtractor();
+//			int lines = 0;
+//			while (resultSet.next()) {
+////				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
+//				
+//				// Pattern
+//				// Ends with. previous page
+//				String fulltext = resultSet.getString("cleaned_text");
+//				// Skip articles that have no content.
+//				if(fulltext==null || fulltext.length() < 50) {
+//					continue;
+//				}
+//				
+//				// Feedback
+//				if (lines++%1000 ==0 && debug) {
+//					System.out.println("Processed Lines:" + (lines-1));
+//				}
+//	
+//				fulltext = cleanText(fulltext);
+//				
+//				getNeededNounSet(collectionMap, fulltext, nE);
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		} finally {
+//			try {
+//				resultSet.close();
+//				statement.close();
+//				connection.close();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		
+//		return collectionMap;
+//	}
 	
 	/**
 	 * Extends the global map by a list of at most one new noun needed to describe ONE article.
