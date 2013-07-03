@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,7 +79,7 @@ public class AllFeaturesDatabaseExtractor {
 	    ALL, BEST_WORST_N, BEST 
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException, NumberFormatException, SQLException {
 
 		options = createOptions();
 		CommandLineParser parser = new PosixParser();
@@ -116,8 +117,10 @@ public class AllFeaturesDatabaseExtractor {
 				descriptiveNouns = getAllNouns(FeatureType.BEST_WORST_N, 2, LIMIT);		  // Get all nouns from the corpus
 				if (debug) {System.out.println("NOUN#=" + descriptiveNouns.size());}
 				Set<FeatureVector<Double>> articleFeatureVecs = new HashSet<FeatureVector<Double>>();
-				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());			
-				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts);
+				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
+				HashMap<String, Integer> globalFeaturePositionMap = new HashMap<String, Integer>(descriptiveNouns.size(),1.0f);
+				NounExtractor nE = new NounExtractor(); // Actual extractor is exchangable
+				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, nE);
 				//TFIDF
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 				
@@ -125,6 +128,10 @@ public class AllFeaturesDatabaseExtractor {
 				 
 				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
 				printFeatureVec(tfidfFeatures);
+				
+				// TODO TRY THIS OUT = Add new feature
+				String uncleanedArticle = "Bla di bla ich bin ein Test article";
+				addFeature(articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, uncleanedArticle, nE, docCount);
 				 
 			}
 		} catch (ParseException exp) {
@@ -132,6 +139,8 @@ public class AllFeaturesDatabaseExtractor {
 		}
 
 	}
+
+	
 
 	private static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs, String path) {
 		 try{
@@ -184,7 +193,7 @@ public class AllFeaturesDatabaseExtractor {
 	}
 
 	/**
-	 * Turn TF into TF IDF vector.
+	 * Turn TF vectors into TFIDF vectors.
 	 * @param articleFeatureVecs
 	 * @param termInNumDocsCounts
 	 * @param docCount
@@ -195,30 +204,66 @@ public class AllFeaturesDatabaseExtractor {
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
 		for (FeatureVector<Double> featureVec : articleFeatureVecs) {
-			for (int pos = 0; pos < featureVec.getDimensionality(); pos++) {
-				if(featureVec.getValue(pos)==null){
+			
+			augment2TFIDF(featureVec, termInNumDocsCounts, docCount);
+//			for (int pos = 0; pos < featureVec.getDimensionality(); pos++) {
+//				if(featureVec.getValue(pos)==null){
+//					continue;
+//				}
+//				double TF  = featureVec.getValue(pos);
+//				double IDF = Math.log((double) docCount/
+//						    (double) termInNumDocsCounts.get(pos));
+//				
+//				// Update the TF value to the TF IDF value
+//				featureVec.setValue(pos, (double) (TF*IDF));
+//			}
+		}
+		return articleFeatureVecs;
+	}
+	
+	/**
+	 * Turn TF into TF IDF vector.
+	 * @param articleFeatureVecs
+	 * @param termInNumDocsCounts
+	 * @param docCount
+	 * @return 
+	 */
+	private static FeatureVector<Double> augment2TFIDF(
+				   FeatureVector<Double> articleFeatureVec,
+					   HashMap<Integer, Long>   termInNumDocsCounts,
+					   					long    docCount) {
+			// for every counted noun in the article
+			for (int pos = 0; pos < articleFeatureVec.getDimensionality(); pos++) {
+				if(articleFeatureVec.getValue(pos)==null){
 					continue;
 				}
-				double TF  = featureVec.getValue(pos);
+				double TF  = articleFeatureVec.getValue(pos);
 				double IDF = Math.log((double) docCount/
 						    (double) termInNumDocsCounts.get(pos));
 				
 				// Update the TF value to the TF IDF value
-				featureVec.setValue(pos, (double) (TF*IDF*1000));
+				articleFeatureVec.setValue(pos, (double) (TF*IDF));
 			}
-		}
-		return articleFeatureVecs;
+		return articleFeatureVec;
 	}
 
 	/**
-	 * Method that counts for every documents its feature counts
+	 * Method that counts for every documents its feature counts.
+	 * 
+	 * @param commonNouns Golbal nouns determined during preprocessing
+	 * @param limit	num aricle to read (-1 = unlimited)
+	 * @param articleFeatureVecs List of per document noun counts (TF)
+	 * @param termInNumDocsCounts (IDF word in docs counts)
+	 * @param globalFeaturePositionMap (noun Order each article feature will follow. So they all have the same order)
+	 * @return
 	 */
-	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, HashMap<Integer, Long> termInNumDocsCounts) {
+	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, 
+			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, NounExtractor nE) {
 		/** IDF parts. */
 		long doccount = 0;
 		
 		// Sort the global features so they appear in the same order in ever article feature vector.
-		HashMap<String, Integer> globalFeaturePositionMap = toSortedGlobalFeatureMap(commonNouns);
+		globalFeaturePositionMap = toSortedGlobalFeatureMap(commonNouns);
 		logger.trace(globalFeaturePositionMap);
 		
 		String LIMIT = "";
@@ -245,7 +290,6 @@ public class AllFeaturesDatabaseExtractor {
 			
 			
 			// Create nounextraction object
-			NounExtractor nE = new NounExtractor();
 			int lines = 0;
 			while (resultSet.next()) {
 				// Feedback
@@ -283,6 +327,19 @@ public class AllFeaturesDatabaseExtractor {
 			}
 		}
 		return doccount;
+	}
+	
+	
+	private static void addFeature(Set<FeatureVector<Double>> articleFeatureVecs, 
+			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, String fulltext, NounExtractor nE, long docCount) throws NumberFormatException, SQLException {
+		
+		// Get TF Info.
+		PrimitiveMapFeatureVector<Double> articleFeature = new PrimitiveMapFeatureVector<Double>
+		(Long.parseLong(resultSet.getString("id")), globalFeaturePositionMap.size(),
+         nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, cleanText(fulltext)));
+		
+		// Add IDF info.
+		articleFeatureVecs.add(augment2TFIDF(articleFeature, termInNumDocsCounts, docCount)); 
 	}
 
 	/**
