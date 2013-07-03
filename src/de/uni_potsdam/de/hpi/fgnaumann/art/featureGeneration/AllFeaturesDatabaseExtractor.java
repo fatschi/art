@@ -77,8 +77,24 @@ public class AllFeaturesDatabaseExtractor {
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
 	static boolean debug = true; // Print debug info
 	
+	/**
+	 * 
+	 * @author Nils Rethmeier
+	 *
+	 */
 	public enum FeatureType {
-	    ALL, BEST_WORST_N, BEST 
+		/**
+		 * Take all nouns as features.
+		 */
+	    ALL,
+	    /**
+	     * Only use the N most and least frequent nouns per article. Normally, N=3;
+	     */
+	    BEST_WORST_N,
+	    /**
+	     * Only use the best noun of an article if its not already a collectionwide noun.
+	     */
+	    BEST 
 	}
 
 	public static void main(String[] args) throws IOException, NumberFormatException, SQLException {
@@ -143,8 +159,10 @@ public class AllFeaturesDatabaseExtractor {
 	}
 
 	
+	
+	
 
-	private static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs, String path) {
+	static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs, String path) {
 		 try{
 		      //use buffering
 		      OutputStream file = new FileOutputStream(path);
@@ -187,7 +205,7 @@ public class AllFeaturesDatabaseExtractor {
 		return recoveredSet;
 	}
 
-	private static void printFeatureVec(
+	static void printFeatureVec(
 			Set<FeatureVector<? extends Number>> recoveredList) {
 		for (FeatureVector<? extends Number> featureVec : recoveredList) {
 			logger.trace(featureVec);
@@ -201,7 +219,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param docCount
 	 * @return 
 	 */
-	private static Set<FeatureVector<Double>> augment2TFIDF(
+	public static Set<FeatureVector<Double>> augment2TFIDF(
 			Set<FeatureVector<Double>> articleFeatureVecs,
 					   HashMap<Integer, Long>   termInNumDocsCounts,
 					   					long    docCount) {
@@ -246,6 +264,7 @@ public class AllFeaturesDatabaseExtractor {
 				// Update the TF value to the TF IDF value
 				articleFeatureVec.setValue(pos, (double) (TF*IDF));
 			}
+			++docCount; // Update the feature count;
 		return articleFeatureVec;
 	}
 
@@ -259,7 +278,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param globalFeaturePositionMap (noun Order each article feature will follow. So they all have the same order)
 	 * @return
 	 */
-	private static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, 
+	public static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, 
 			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, NounExtractor nE) {
 		/** IDF parts. */
 		long doccount = 0;
@@ -332,7 +351,7 @@ public class AllFeaturesDatabaseExtractor {
 	}
 	
 	
-	private static void addFeature(Set<FeatureVector<Double>> articleFeatureVecs, 
+	static void addFeature(Set<FeatureVector<Double>> articleFeatureVecs, 
 			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, String fulltext, NounExtractor nE, long docCount) throws NumberFormatException, SQLException {
 		
 		// Get TF Info.
@@ -434,7 +453,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param articleLimit number of articles to process (-1 means no limit).
 	 * @return The set of collection-wide nouns.
 	 */
-	private static HashSet<String> getAllNouns(FeatureType ftype, int numWorstBest, int articleLimit) {
+	public static HashSet<String> getAllNouns(FeatureType ftype, int numWorstBest, int articleLimit) {
 		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
 		try {
 			if (connectionString.contains("sqlite")) {
