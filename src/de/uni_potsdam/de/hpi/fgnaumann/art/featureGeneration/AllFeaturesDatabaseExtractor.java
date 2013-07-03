@@ -39,6 +39,8 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import backupsForPossibleDebugging.DatabaseExtractor;
+
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
