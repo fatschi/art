@@ -11,8 +11,8 @@ public class RecommendationServer {
 		WebServer webServer = new WebServer(8080);
 	      XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
 	      PropertyHandlerMapping phm = new PropertyHandlerMapping();
-	      LSHRunner lshRunner = new LSHRunner();
-	      phm.setRequestProcessorFactoryFactory(new EchoRequestProcessorFactoryFactory(lshRunner));
+	      LSHRunner lshRunner = new LSHRunnerImplementation();
+	      phm.setRequestProcessorFactoryFactory(new LSHRunnerRequestProcessorFactoryFactory(lshRunner));
 	      phm.setVoidMethodEnabled(true);
 	      phm.addHandler(LSHRunner.class.getName(), LSHRunner.class);
 	      xmlRpcServer.setHandlerMapping(phm);

@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,11 +33,8 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import backupsForPossibleDebugging.DatabaseExtractor;
 
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
@@ -56,7 +51,7 @@ public class AllFeaturesDatabaseExtractor {
 	private static final int MINIMAL_ARTICLE_LENGTH = 50;
 
 	private static Logger logger = LogManager
-			.getFormatterLogger(DatabaseExtractor.class.getName());
+			.getFormatterLogger(AllFeaturesDatabaseExtractor.class.getName());
 
 	static Options options = null;
 	static String connectionString = null;
@@ -142,7 +137,7 @@ public class AllFeaturesDatabaseExtractor {
 				//TFIDF
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 				
-				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.ser");
+				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.lsh");
 				 
 				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
 				printFeatureVec(tfidfFeatures);
@@ -200,7 +195,7 @@ public class AllFeaturesDatabaseExtractor {
 		      logger.error("Cannot perform input. Class not found." + ex);
 		    }
 		    catch(IOException ex){
-		    	logger.error("Cannot perform input." + ex);
+		    	logger.error("Cannot perform input. " + ex);
 		    }
 		return recoveredSet;
 	}
