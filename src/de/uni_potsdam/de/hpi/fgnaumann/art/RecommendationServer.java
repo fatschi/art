@@ -4,7 +4,11 @@ import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
-
+/**
+ * An standalone Apache XML-RPC-server allowing to communicate with a running instance of a {@link LSHRunner}.
+ * @author fabian
+ *
+ */
 public class RecommendationServer {
 
 	public static void main(String[] args) throws Exception {

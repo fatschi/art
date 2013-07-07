@@ -2,7 +2,11 @@ package de.uni_potsdam.de.hpi.fgnaumann.art.permutation;
 
 import java.util.Arrays;
 import java.util.Random;
-
+/**
+ * A {@link PermutationGenerator} implementation based on the FisherYates algorithm.
+ * @author fabian
+ *
+ */
 public class FisherYates implements PermutationGenerator{
 
 	@Override

@@ -11,7 +11,11 @@ import org.apache.commons.collections.bag.TreeBag;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatureVector;
-
+/**
+ * A {@link Callable} that permutes a {@link Set} of {@link FeatureVector}'s {@link SignatureVector}'s and outputs the found neigbours.
+ * @author fabian
+ *
+ */
 public class PermutationWorker implements
 		Callable<Map<Long, Double>> {
 

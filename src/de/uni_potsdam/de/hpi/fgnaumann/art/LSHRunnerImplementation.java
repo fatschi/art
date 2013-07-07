@@ -26,9 +26,23 @@ import org.apache.logging.log4j.Logger;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.lsh.LSH;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
+/**
+ * This class can act as a standalone Java-CLI program to run LSH on a given
+ * {@link Set} of {@link FeatureVector} and to search for neighbours of a given
+ * {@link FeatureVector}. It's methods can also be executed by the
+ * {@link RecommendationServer} which acts as an XML-RPC server. It also
+ * includes a simulation benchmark to test the LSH-implementation in the
+ * background.
+ * 
+ * @author fabian
+ * 
+ */
 public class LSHRunnerImplementation implements LSHRunner {
+
+	public static final Class<?> vectorImplementationClass = NumberListFeatureVector.class;
 
 	private static final int STORAGE_THRESHOLD = 0;
 
@@ -37,13 +51,16 @@ public class LSHRunnerImplementation implements LSHRunner {
 	private static Logger logger = LogManager
 			.getFormatterLogger(LSHRunnerImplementation.class.getName());
 
-	private static double SIMILARITY_THRESHOLD = 0.5d;
+	// retrieval parameters
+	private static double SIMILARITY_THRESHOLD = 0.1d;
 	private static int TOP_K = 5;
 
+	// parallelization parameters
 	private static int CORES = Runtime.getRuntime().availableProcessors();
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
+	// simulation parameters
 	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
 	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
@@ -51,6 +68,7 @@ public class LSHRunnerImplementation implements LSHRunner {
 	private static int SIMULATION_VECTOR_VALUE_SPACE = 100;
 	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.15;
 
+	// LSH parameters
 	private static int NUMBER_OF_RANDOM_VECTORS_d = 100;
 	private static int NUMBER_OF_PERMUTATIONS_q = 20;
 	private static int WINDOW_SIZE_B = 50;
@@ -108,13 +126,10 @@ public class LSHRunnerImplementation implements LSHRunner {
 			o.close();
 			logger.info("loaded data");
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -128,14 +143,15 @@ public class LSHRunnerImplementation implements LSHRunner {
 			o.writeObject(inputVectors);
 			o.close();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	public List<Pair<Double, Long>> runSearch(String inputFilePath,
 			String searchVectorId, double SIMILARITY_THRESHOLD, int TOP_K,
@@ -163,17 +179,14 @@ public class LSHRunnerImplementation implements LSHRunner {
 			}
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
+		List<Pair<Double, Long>> neighbours = LSH.searchNeighbours(
 				searchVector, inputVectors, SIMILARITY_THRESHOLD, TOP_K,
 				NTHREADS, NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 		// List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
@@ -187,10 +200,15 @@ public class LSHRunnerImplementation implements LSHRunner {
 		return neighbours;
 	}
 
-	public List<Pair<Double, Long>> runSimulationBenchmark(){
+	public List<Pair<Double, Long>> runSimulationBenchmark() {
 		return runSimulationBenchmark(false);
 	}
-	
+
+	/**
+	 * 
+	 * @param loadSimulationInputFile
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	private List<Pair<Double, Long>> runSimulationBenchmark(
 			boolean loadSimulationInputFile) {
@@ -215,13 +233,10 @@ public class LSHRunnerImplementation implements LSHRunner {
 				logger.trace("simulation started - finished loading of random feature vectors");
 
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {
@@ -233,10 +248,16 @@ public class LSHRunnerImplementation implements LSHRunner {
 							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 				}
 			}
-			searchVector = new PrimitiveMapFeatureVector<Integer>(-1l,
-					searchVectorValues);
-			// searchVector = new NumberListFeatureVector<Integer>(-1l,
-			// searchVectorValues);
+
+			if (vectorImplementationClass
+					.equals(PrimitiveMapFeatureVector.class)) {
+				searchVector = new PrimitiveMapFeatureVector<Integer>(-1l,
+						searchVectorValues);
+			} else if (vectorImplementationClass
+					.equals(NumberListFeatureVector.class)) {
+				searchVector = new NumberListFeatureVector<Integer>(-1l,
+						searchVectorValues);
+			}
 
 			inputVectors = generateSimulationVectors(searchVectorValues);
 			if (NUMBER_OF_SIMULATION_VECTORS * inputVectors.size() <= STORAGE_THRESHOLD) {
@@ -251,20 +272,20 @@ public class LSHRunnerImplementation implements LSHRunner {
 					o.writeObject(inputVectors);
 					o.close();
 				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 			logger.trace("simulation started - finished generation of random feature vectors");
 		}
 
-		List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
-				searchVector, inputVectors, SIMILARITY_THRESHOLD, NTHREADS,
-				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d,
-				NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
+		List<Pair<Double, Long>> neighbours = LSH
+				.computeLSHandSearchNeighbours(searchVector, inputVectors,
+						SIMILARITY_THRESHOLD, NTHREADS,
+						CHUNK_SIZE_CLASSIFIER_WORKER,
+						NUMBER_OF_RANDOM_VECTORS_d, NUMBER_OF_PERMUTATIONS_q,
+						WINDOW_SIZE_B);
 
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());
@@ -312,11 +333,18 @@ public class LSHRunnerImplementation implements LSHRunner {
 				}
 
 			}
-			FeatureVector<? extends Number> closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
-					(long) inputVectors.size(), closeValueFeatureValues);
-			// FeatureVector<? extends Number> closeValueFeatureVector = new
-			// NumberListFeatureVector<Integer>(
-			// (long) inputVectors.size(), closeValueFeatureValues);
+
+			FeatureVector<? extends Number> closeValueFeatureVector = null;
+			if (vectorImplementationClass
+					.equals(PrimitiveMapFeatureVector.class)) {
+				closeValueFeatureVector = new PrimitiveMapFeatureVector<Integer>(
+						(long) inputVectors.size(), closeValueFeatureValues);
+			} else if (vectorImplementationClass
+					.equals(NumberListFeatureVector.class)) {
+				closeValueFeatureVector = new NumberListFeatureVector<Integer>(
+						(long) inputVectors.size(), closeValueFeatureValues);
+			}
+
 			inputVectors.add(closeValueFeatureVector);
 		}
 
@@ -328,11 +356,17 @@ public class LSHRunnerImplementation implements LSHRunner {
 							.nextInt(SIMULATION_VECTOR_VALUE_SPACE);
 				}
 			}
-			FeatureVector<? extends Number> randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
-					(long) inputVectors.size(), randomFeatureValues);
-			// FeatureVector<? extends Number> randomFeatureVector = new
-			// NumberListFeatureVector<Integer>(
-			// (long)inputVectors.size(), randomFeatureValues);
+
+			FeatureVector<? extends Number> randomFeatureVector = null;
+			if (vectorImplementationClass
+					.equals(PrimitiveMapFeatureVector.class)) {
+				randomFeatureVector = new PrimitiveMapFeatureVector<Integer>(
+						(long) inputVectors.size(), randomFeatureValues);
+			} else if (vectorImplementationClass
+					.equals(NumberListFeatureVector.class)) {
+				randomFeatureVector = new NumberListFeatureVector<Integer>(
+						(long) inputVectors.size(), randomFeatureValues);
+			}
 			inputVectors.add(randomFeatureVector);
 		}
 		return inputVectors;

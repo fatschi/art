@@ -20,19 +20,29 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunnerImplementation;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
+/**
+ * The main algorithm implementing "Randomized Algorithms and NLP: Using
+ * Locality Sensitive Hash Functions for High Speed Noun Clustering" by Deepak
+ * Ravichandran, Patrick Pantel, and Eduard Hovy.
+ * 
+ * @author fabian
+ * 
+ */
 public class LSH {
 
 	private static Logger logger = LogManager.getFormatterLogger(LSH.class
 			.getName());
 
 	private static Random rnd = new Random();
-	
-	public static List<Pair<Double, Long>> computeNeighbours(
+
+	public static List<Pair<Double, Long>> searchNeighbours(
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			double maxDistance, int topK, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
@@ -52,7 +62,8 @@ public class LSH {
 		PermutationGenerator permutationGenerator = new FisherYates();
 		for (int i = 0; i < NUMBER_OF_PERMUTATIONS_q; i++) {
 			randomPermutations.add(permutationGenerator
-					.generateRandomPermutation(exampleVector.getDimensionality()));
+					.generateRandomPermutation(exampleVector
+							.getDimensionality()));
 		}
 		logger.trace("finished creation of random permutations");
 
@@ -160,7 +171,7 @@ public class LSH {
 		return inputVectors;
 	}
 
-	public static List<Pair<Double, Long>> computeNeighbours(
+	public static List<Pair<Double, Long>> computeLSHandSearchNeighbours(
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			double maxDistance, int NTHREADS, int CHUNK_SIZE_CLASSIFIER_WORKER,
 			int NUMBER_OF_RANDOM_VECTORS_d, int NUMBER_OF_PERMUTATIONS_q,
@@ -276,10 +287,16 @@ public class LSH {
 		for (long di = 0; di < numberOfRandomVectors; di++) {
 			// Randomly generate a weight vector of random normal mean 0 and
 			// variance 1 weights.
-			FeatureVector<Double> dI = new PrimitiveMapFeatureVector<Double>(
-					di, dimensionality);
-			// FeatureVector<Double> dI = new
-			// NumberListFeatureVector<Double>((long)di);
+
+			FeatureVector<Double> dI = null;
+			if (LSHRunnerImplementation.vectorImplementationClass
+					.equals(PrimitiveMapFeatureVector.class)) {
+				dI = new PrimitiveMapFeatureVector<Double>(di, dimensionality);
+			} else if (LSHRunnerImplementation.vectorImplementationClass
+					.equals(NumberListFeatureVector.class)) {
+				dI = new NumberListFeatureVector<Double>((long) di);
+			}
+
 			for (int ki = 0; ki < dimensionality; ki++) {
 				dI.setValue(ki, rnd.nextGaussian());
 			}

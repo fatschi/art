@@ -11,6 +11,15 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 
+/**
+ * A more sophisticated implementation of {@link FeatureVector} backed up by
+ * fastutil's {@link Int2DoubleAVLTreeMap} to better support sparse vectors.
+ * 
+ * @author fabian
+ * 
+ * @param <T>
+ *            The type of the values the vector contains.
+ */
 public class PrimitiveMapFeatureVector<T extends Number> implements
 		FeatureVector<T> {
 
@@ -28,7 +37,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 		featuresMap.defaultReturnValue(0);
 		this.id = id;
 	}
-	
+
 	@SafeVarargs
 	public PrimitiveMapFeatureVector(Long id, T... features) {
 		this.dimensions = features.length;
@@ -40,16 +49,17 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 		}
 		this.id = id;
 	}
-	
+
 	@SafeVarargs
-	public PrimitiveMapFeatureVector(Long id, Integer dimensionality, Map<Integer, Double> features) {
+	public PrimitiveMapFeatureVector(Long id, Integer dimensionality,
+			Map<Integer, Double> features) {
 		this.dimensions = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap(features);
 		featuresMap.defaultReturnValue(0);
 		this.id = id;
 	}
-	
-	//FIXME
+
+	// FIXME
 	@SuppressWarnings("unchecked")
 	@Override
 	@Deprecated
@@ -104,8 +114,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 		// Scalar Product
 		for (int i = 0; i != this.getDimensionality(); ++i) {
 			// TODO check the type of the vector
-			sum += wd.getValue(i).doubleValue()
-					* this.featuresMap.get(i);
+			sum += wd.getValue(i).doubleValue() * this.featuresMap.get(i);
 		}
 
 		// sign binary function
@@ -125,11 +134,12 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	public SignatureVector getLocalitySensitiveHashed() {
 		return this.localitySensitiveHashed;
 	}
-	
+
 	@Override
 	public String toString() {
-		return ("FeatureVector [id=" + id + ", features="+this.featuresMap+ ", localitySensitiveHashed="
-				+ getLocalitySensitiveHashed() + ", features=" + featuresMap + "]");
+		return ("FeatureVector [id=" + id + ", features=" + this.featuresMap
+				+ ", localitySensitiveHashed=" + getLocalitySensitiveHashed()
+				+ ", features=" + featuresMap + "]");
 	}
 
 }

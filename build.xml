@@ -5,13 +5,9 @@
 	<target name="create_run_jar">
 		<jar destfile="/home/fabian/art/target/lsh.jar">
 			<manifest>
-				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunner" />
-				<attribute name="Class-Path" value=". foo_lib/commons-lang3-3.1.jar foo_lib/guava-14.0.1.jar foo_lib/qtag.jar foo_lib/lingpipe-4.1.0.jar foo_lib/boilerpipe-1.1.0.jar foo_lib/nekohtml-1.9.13.jar foo_lib/xerces-2.9.1.jar foo_lib/commons-collections-3.2.1.jar foo_lib/log4j-api-2.0-beta6.jar foo_lib/log4j-core-2.0-beta6.jar foo_lib/commons-cli-1.2.jar foo_lib/sqlite-jdbc-3.7.2.jar foo_lib/postgresql-9.2-1002.jdbc4.jar foo_lib/fastutil-6.5.4.jar foo_lib/commons-logging-1.1.jar foo_lib/ws-commons-util-1.0.2.jar foo_lib/xmlrpc-client-3.1.3.jar foo_lib/xmlrpc-common-3.1.3.jar foo_lib/xmlrpc-server-3.1.3.jar foo_lib/junit.jar foo_lib/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
-			</manifest>
-			<fileset dir="/home/fabian/art/bin" />
-		</jar>
-		<jar destfile="/home/fabian/art/target/db.jar">
-			<manifest>
+				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunnerImplementation" />
+				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.RecommendationServer" />
+				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.RecommendationClient" />
 				<attribute name="Main-Class" value="de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.DatabaseExtractor" />
 				<attribute name="Class-Path" value=". foo_lib/commons-lang3-3.1.jar foo_lib/guava-14.0.1.jar foo_lib/qtag.jar foo_lib/lingpipe-4.1.0.jar foo_lib/boilerpipe-1.1.0.jar foo_lib/nekohtml-1.9.13.jar foo_lib/xerces-2.9.1.jar foo_lib/commons-collections-3.2.1.jar foo_lib/log4j-api-2.0-beta6.jar foo_lib/log4j-core-2.0-beta6.jar foo_lib/commons-cli-1.2.jar foo_lib/sqlite-jdbc-3.7.2.jar foo_lib/postgresql-9.2-1002.jdbc4.jar foo_lib/fastutil-6.5.4.jar foo_lib/commons-logging-1.1.jar foo_lib/ws-commons-util-1.0.2.jar foo_lib/xmlrpc-client-3.1.3.jar foo_lib/xmlrpc-common-3.1.3.jar foo_lib/xmlrpc-server-3.1.3.jar foo_lib/junit.jar foo_lib/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
 			</manifest>
@@ -42,6 +38,5 @@
         <copy file="C:/Users/i067858/Desktop/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar" todir="C:/Users/i067858/workspace3/foo_lib"/>
 		<!-- copy jars to isfet -->
 		<scp file="/home/fabian/art/target/lsh.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa" />
-		<scp file="/home/fabian/art/target/db.jar" todir="art03@172.16.64.23:/home/art03" keyfile="${user.home}/.ssh/id_rsa" />
 	</target>
 </project>

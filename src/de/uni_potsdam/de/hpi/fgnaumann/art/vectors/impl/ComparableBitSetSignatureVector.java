@@ -8,7 +8,11 @@ import java.util.List;
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.ComparableBitSet;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
-
+/**
+ * A {@link SignatureVector} implementation based on {@link ComparableBitSet}.
+ * @author fabian
+ *
+ */
 public class ComparableBitSetSignatureVector implements SignatureVector, Serializable {
 
 	private static final long serialVersionUID = -482400029141498267L;

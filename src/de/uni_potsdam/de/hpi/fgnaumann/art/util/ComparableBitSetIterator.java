@@ -5,7 +5,7 @@ import java.util.NoSuchElementException;
 
 
 /**
- *         This class implements an iterator over ComparableBitSets
+ *         This class implements an {@link Iterator} over {@link ComparableBitSet}.
  *         
  * @author Patrick Schulze (patrick.schulze@student.hpi.uni-potsdam.de)
  * @author Fabian Tschirschnitz

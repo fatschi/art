@@ -4,7 +4,7 @@ import java.util.BitSet;
 import java.util.Iterator;
 
 /**
- * This class extends java.util.BitSet and implements the interfaces Comparable
+ * This class extends {@link BitSet} and implements the interfaces {@link Comparable}
  * and Iterable.
  * 
  * @author Patrick Schulze (patrick.schulze@student.hpi.uni-potsdam.de)

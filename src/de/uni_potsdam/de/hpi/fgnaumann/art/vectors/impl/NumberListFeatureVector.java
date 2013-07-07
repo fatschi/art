@@ -7,7 +7,12 @@ import java.util.Set;
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
-
+/**
+ * A primitive {@link FeatureVector} implementation backed up by an {@link ArrayList}.
+ * @author fabian
+ *
+ * @param <T> The type of the values the vector contains.
+ */
 public class NumberListFeatureVector<T extends Number> implements
 		FeatureVector<T> {
 	private static final long serialVersionUID = -583575794565479250L;
@@ -102,9 +107,9 @@ public class NumberListFeatureVector<T extends Number> implements
 
 		// sign binary function
 		if (sum <= 0) {
-			return false; // yes, war vorher 0!?
+			return false; 
 		} else {
-			return true; // no, war vorher 1?!
+			return true; 
 		}
 	}
 

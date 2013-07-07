@@ -5,6 +5,9 @@ import java.net.URL;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.apache.xmlrpc.client.util.ClientFactory;
+/**
+ * An example implementation of an Apache-XML-RPC-client communicating with a {@link RecommendationServer}. 
+ */
 
 public class RecommendationClient {
     public static void main(String[] args) throws Exception {
