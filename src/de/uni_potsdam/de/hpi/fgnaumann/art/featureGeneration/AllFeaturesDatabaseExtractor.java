@@ -144,7 +144,8 @@ public class AllFeaturesDatabaseExtractor {
 				
 				// TODO TRY THIS OUT = Add new feature
 				String uncleanedArticle = "Bla di bla ich bin ein Test article";
-				addFeature(articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, uncleanedArticle, nE, docCount);
+				long testId = 0;
+				addFeature(articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, uncleanedArticle, nE, docCount, testId);
 				 
 			}
 		} catch (ParseException exp) {
@@ -347,11 +348,11 @@ public class AllFeaturesDatabaseExtractor {
 	
 	
 	static void addFeature(Set<FeatureVector<Double>> articleFeatureVecs, 
-			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, String fulltext, NounExtractor nE, long docCount) throws NumberFormatException, SQLException {
+			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, String fulltext, NounExtractor nE, long docCount, Long id) throws NumberFormatException, SQLException {
 		
 		// Get TF Info.
 		PrimitiveMapFeatureVector<Double> articleFeature = new PrimitiveMapFeatureVector<Double>
-		(Long.parseLong(resultSet.getString("id")), globalFeaturePositionMap.size(),
+		(id, globalFeaturePositionMap.size(),
          nE.generateFeature(globalFeaturePositionMap, termInNumDocsCounts, cleanText(fulltext)));
 		
 		// Add IDF info.

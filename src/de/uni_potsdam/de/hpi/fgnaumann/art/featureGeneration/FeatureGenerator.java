@@ -63,9 +63,9 @@ public class FeatureGenerator {
 	 * @param uncleanedArticle
 	 * @throws Exception 
 	 */
-	public void addArticleToFeatures(String uncleanedArticle) throws Exception {
+	public void addArticleToFeatures(String uncleanedArticle, long ID) throws Exception {
 		try {
-			AllFeaturesDatabaseExtractor.addFeature(articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, uncleanedArticle, nE, docCount);
+			AllFeaturesDatabaseExtractor.addFeature(articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, uncleanedArticle, nE, docCount, ID);
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
