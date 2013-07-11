@@ -111,12 +111,12 @@ public class LSH {
 		}
 		logger.trace("finished filtering of neighbours by threshold");
 
-		//do topK return
-		if(resultList.size()<=topK){
+		// do topK return
+		if (resultList.size() <= topK) {
 			return resultList.descendingSet();
-		}else{
+		} else {
 			NavigableSet<Pair<Double, Long>> resultListTopK = new TreeSet<Pair<Double, Long>>();
-			for(int i = 0; i <= topK; i++){
+			for (int i = 0; i <= topK; i++) {
 				resultListTopK.add(resultList.descendingSet().pollFirst());
 			}
 			return resultListTopK;

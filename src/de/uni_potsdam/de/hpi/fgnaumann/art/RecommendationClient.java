@@ -25,16 +25,16 @@ public class RecommendationClient {
 		client.setConfig(config);
 		ClientFactory factory = new ClientFactory(client);
 		LSHRunner lshRunner = (LSHRunner) factory.newInstance(LSHRunner.class);
-		FeatureGenerator featureGenerator = (FeatureGenerator) factory
-				.newInstance(FeatureGenerator.class);
-		featureGenerator
-				.runPreprocessing(
-						0.0f,
-						-1,
-						FeatureType.ALL,
-						3,
-						"corpora/augmentedTFIDF.lsh",
-						"jdbc:postgresql://isfet.hpi.uni-potsdam.de:5432/art2013?user=art2013&password=nVesq3TfTmeqRkP");
+//		FeatureGenerator featureGenerator = (FeatureGenerator) factory
+//				.newInstance(FeatureGenerator.class);
+//		featureGenerator
+//				.runPreprocessing(
+//						0.0f,
+//						-1,
+//						FeatureType.ALL,
+//						3,
+//						"corpora/augmentedTFIDF.lsh",
+//						"jdbc:postgresql://isfet.hpi.uni-potsdam.de:5432/art2013?user=art2013&password=nVesq3TfTmeqRkP");
 		lshRunner.runLSH(32, 10, 333);
 		System.out.println(lshRunner.runSearch("27793", 0.8, 5, 32, 30, 1000));
 		System.out.println(lshRunner.runSimulationBenchmark());

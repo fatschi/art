@@ -73,15 +73,16 @@ public class LSHRunnerImpl implements LSHRunner {
 	private static int NUMBER_OF_RANDOM_VECTORS_d = 100;
 	private static int NUMBER_OF_PERMUTATIONS_q = 20;
 	private static int WINDOW_SIZE_B = 50;
-	
-	//vectors
+
+	// vectors
 	Set<FeatureVector<? extends Number>> inputVectors;
 
-	//random plane generator
+	// random plane generator
 	private static Random rnd = new Random();
 
 	/**
 	 * Construcor used by simulation.
+	 * 
 	 * @param inputFilePath
 	 */
 	@SuppressWarnings("unchecked")
@@ -108,29 +109,29 @@ public class LSHRunnerImpl implements LSHRunner {
 	 * Constructor used by {@link RecommendationServer}.
 	 */
 	public LSHRunnerImpl() {
-		
+
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public void loadData(String filePath) throws IOException, ClassNotFoundException {
+	public void loadData(String filePath) throws IOException,
+			ClassNotFoundException {
 		inputVectors = new HashSet<FeatureVector<? extends Number>>();
-			logger.info("loading data");
-			FileInputStream fis = new FileInputStream(filePath);
-			ObjectInputStream o = new ObjectInputStream(fis);
-			inputVectors = (Set<FeatureVector<? extends Number>>) o
-					.readObject();
-			o.close();
-			logger.info("loaded data");
+		logger.info("loading data");
+		FileInputStream fis = new FileInputStream(filePath);
+		ObjectInputStream o = new ObjectInputStream(fis);
+		inputVectors = (Set<FeatureVector<? extends Number>>) o.readObject();
+		o.close();
+		logger.info("loaded data");
 	}
 
 	@Override
 	public void storeData(String filePath) throws IOException {
-			FileOutputStream fos;
-			fos = new FileOutputStream(filePath);
-			ObjectOutputStream o = new ObjectOutputStream(fos);
-			o.writeObject(inputVectors);
-			o.close();
+		FileOutputStream fos;
+		fos = new FileOutputStream(filePath);
+		ObjectOutputStream o = new ObjectOutputStream(fos);
+		o.writeObject(inputVectors);
+		o.close();
 	}
 
 	/**
@@ -139,8 +140,9 @@ public class LSHRunnerImpl implements LSHRunner {
 	@Override
 	public void runLSH(int NTHREADS, int CHUNK_SIZE_CLASSIFIER_WORKER,
 			int NUMBER_OF_RANDOM_VECTORS_d) {
-		if(inputVectors==null){
-			throw new IllegalStateException("No input vectors were loaded before.");
+		if (inputVectors == null) {
+			throw new IllegalStateException(
+					"No input vectors were loaded before.");
 		}
 		inputVectors = LSH.computeLSH(inputVectors, NTHREADS,
 				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d);
@@ -163,12 +165,11 @@ public class LSHRunnerImpl implements LSHRunner {
 				LSHRunnerImpl lshRunner = new LSHRunnerImpl();
 				lshRunner.runSimulationBenchmark(line
 						.hasOption("loadSimulationInputFile"));
-	
+
 			} else if (line.hasOption("loadVectorFile")
 					&& line.hasOption("searchVectorId")) {
 				LSHRunnerImpl lshRunner = new LSHRunnerImpl();
-				lshRunner.runSearch(
-						line.getOptionValue("searchVectorId"),
+				lshRunner.runSearch(line.getOptionValue("searchVectorId"),
 						SIMILARITY_THRESHOLD, TOP_K, NTHREADS,
 						NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 			} else if (line.hasOption("loadVectorFile")
@@ -191,8 +192,9 @@ public class LSHRunnerImpl implements LSHRunner {
 	public SortedSet<Pair<Double, Long>> runSearch(String searchVectorId,
 			double SIMILARITY_THRESHOLD, int TOP_K, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
-		if(inputVectors==null){
-			throw new IllegalStateException("No input vectors were loaded before.");
+		if (inputVectors == null) {
+			throw new IllegalStateException(
+					"No input vectors were loaded before.");
 		}
 		FeatureVector<? extends Number> searchVector = null;
 		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();

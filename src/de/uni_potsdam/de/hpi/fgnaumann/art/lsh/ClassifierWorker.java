@@ -5,10 +5,13 @@ import java.util.Set;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
+
 /**
- * A {@link Runnable} that computes the {@link SignatureVector} for a every {@link FeatureVector} in a given {@link Set}.
+ * A {@link Runnable} that computes the {@link SignatureVector} for a every
+ * {@link FeatureVector} in a given {@link Set}.
+ * 
  * @author fabian
- *
+ * 
  */
 public class ClassifierWorker implements Runnable {
 	private Set<FeatureVector<? extends Number>> workingChunk = new HashSet<FeatureVector<? extends Number>>();

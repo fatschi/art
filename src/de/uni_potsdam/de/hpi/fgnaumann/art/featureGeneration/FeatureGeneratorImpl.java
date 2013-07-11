@@ -22,11 +22,12 @@ public class FeatureGeneratorImpl implements FeatureGenerator {
 
 	@Override
 	public void runPreprocessing(float addLimit, int limit, FeatureType ftype,
-			int featureN,
-			String filePath, String connectionString) throws IOException, ClassNotFoundException, SQLException {
+			int featureN, String filePath, String connectionString)
+			throws IOException, ClassNotFoundException, SQLException {
 		HashSet<String> descriptiveNouns = null; // reset
 		descriptiveNouns = AllFeaturesDatabaseExtractor.getAllNouns(ftype,
-				featureN, limit, connectionString); // Get all nouns from the corpus
+				featureN, limit, connectionString); // Get all nouns from the
+													// corpus
 		articleFeatureVecs = new HashSet<FeatureVector<Double>>();
 		termInNumDocsCounts = new HashMap<Integer, Long>(
 				descriptiveNouns.size());
@@ -35,7 +36,8 @@ public class FeatureGeneratorImpl implements FeatureGenerator {
 		nE = new NounExtractor(); // Actual extractor is exchangable
 		long docCount = AllFeaturesDatabaseExtractor.genFeatureVecs(
 				descriptiveNouns, limit, articleFeatureVecs,
-				termInNumDocsCounts, globalFeaturePositionMap, nE, connectionString);
+				termInNumDocsCounts, globalFeaturePositionMap, nE,
+				connectionString);
 		originalCollectionSize = docCount; // Save this size once
 		// TFIDF
 		AllFeaturesDatabaseExtractor.augment2TFIDF(articleFeatureVecs,
@@ -43,10 +45,6 @@ public class FeatureGeneratorImpl implements FeatureGenerator {
 
 		AllFeaturesDatabaseExtractor
 				.writeFeatures(articleFeatureVecs, filePath);
-
-		Set<FeatureVector<? extends Number>> tfidfFeatures = AllFeaturesDatabaseExtractor
-				.readfeatures(filePath);
-		AllFeaturesDatabaseExtractor.printFeatureVec(tfidfFeatures);
 	}
 
 	@Override
