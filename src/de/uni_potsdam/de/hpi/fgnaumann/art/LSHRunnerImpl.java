@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -40,7 +41,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVecto
  * @author fabian
  * 
  */
-public class LSHRunnerImplementation implements LSHRunner {
+public class LSHRunnerImpl implements LSHRunner {
 
 	public static final Class<?> vectorImplementationClass = NumberListFeatureVector.class;
 
@@ -49,7 +50,7 @@ public class LSHRunnerImplementation implements LSHRunner {
 	private static String INPUT_VECTORS_OUT_FILE = null;
 
 	private static Logger logger = LogManager
-			.getFormatterLogger(LSHRunnerImplementation.class.getName());
+			.getFormatterLogger(LSHRunnerImpl.class.getName());
 
 	// retrieval parameters
 	private static double SIMILARITY_THRESHOLD = 0.1d;
@@ -72,51 +73,20 @@ public class LSHRunnerImplementation implements LSHRunner {
 	private static int NUMBER_OF_RANDOM_VECTORS_d = 100;
 	private static int NUMBER_OF_PERMUTATIONS_q = 20;
 	private static int WINDOW_SIZE_B = 50;
+	
+	//vectors
+	Set<FeatureVector<? extends Number>> inputVectors;
 
+	//random plane generator
 	private static Random rnd = new Random();
 
-	public static void main(String args[]) {
-		// create Options object
-		Options options = createOptions();
-		// create the parser
-		CommandLineParser parser = new PosixParser();
-		try {
-			// parse the command line arguments
-			CommandLine line = parser.parse(options, args);
-			if (line.hasOption("help")) {
-				HelpFormatter formatter = new HelpFormatter();
-				formatter.printHelp("LSH", options);
-			}
-			evaluateCLIParameters(line);
-			if (line.hasOption("simulate")) {
-				LSHRunnerImplementation lshRunner = new LSHRunnerImplementation();
-				lshRunner.runSimulationBenchmark(line
-						.hasOption("loadSimulationInputFile"));
-
-			} else if (line.hasOption("loadVectorFile")
-					&& line.hasOption("searchVectorId")) {
-				LSHRunnerImplementation lshRunner = new LSHRunnerImplementation();
-				lshRunner.runSearch(line.getOptionValue("loadVectorFile"),
-						line.getOptionValue("searchVectorId"),
-						SIMILARITY_THRESHOLD, TOP_K, NTHREADS,
-						NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
-			} else if (line.hasOption("loadVectorFile")
-					&& !line.hasOption("searchVectorId")) {
-				LSHRunnerImplementation lshRunner = new LSHRunnerImplementation();
-				lshRunner.runLSH(line.getOptionValue("loadVectorFile"),
-						NTHREADS, CHUNK_SIZE_CLASSIFIER_WORKER,
-						NUMBER_OF_RANDOM_VECTORS_d);
-			}
-		} catch (ParseException exp) {
-			// oops, something went wrong
-			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
-		}
-	}
-
+	/**
+	 * Construcor used by simulation.
+	 * @param inputFilePath
+	 */
 	@SuppressWarnings("unchecked")
-	public void runLSH(String inputFilePath, int NTHREADS,
-			int CHUNK_SIZE_CLASSIFIER_WORKER, int NUMBER_OF_RANDOM_VECTORS_d) {
-		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
+	public LSHRunnerImpl(String inputFilePath) {
+		inputVectors = new HashSet<FeatureVector<? extends Number>>();
 		try {
 			logger.info("loading data");
 			FileInputStream fis = new FileInputStream(inputFilePath);
@@ -132,61 +102,114 @@ public class LSHRunnerImplementation implements LSHRunner {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+	}
 
-		inputVectors = LSH.computeLSH(inputVectors, NTHREADS,
-				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d);
+	/**
+	 * Constructor used by {@link RecommendationServer}.
+	 */
+	public LSHRunnerImpl() {
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public void loadData(String filePath) throws IOException, ClassNotFoundException {
+		inputVectors = new HashSet<FeatureVector<? extends Number>>();
+			logger.info("loading data");
+			FileInputStream fis = new FileInputStream(filePath);
+			ObjectInputStream o = new ObjectInputStream(fis);
+			inputVectors = (Set<FeatureVector<? extends Number>>) o
+					.readObject();
+			o.close();
+			logger.info("loaded data");
+	}
 
-		try {
+	@Override
+	public void storeData(String filePath) throws IOException {
 			FileOutputStream fos;
-			fos = new FileOutputStream(inputFilePath);
+			fos = new FileOutputStream(filePath);
 			ObjectOutputStream o = new ObjectOutputStream(fos);
 			o.writeObject(inputVectors);
 			o.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+	}
+
+	/**
+	 * 
+	 */
+	@Override
+	public void runLSH(int NTHREADS, int CHUNK_SIZE_CLASSIFIER_WORKER,
+			int NUMBER_OF_RANDOM_VECTORS_d) {
+		if(inputVectors==null){
+			throw new IllegalStateException("No input vectors were loaded before.");
+		}
+		inputVectors = LSH.computeLSH(inputVectors, NTHREADS,
+				CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d);
+	}
+
+	public static void main(String args[]) {
+		// create Options object
+		Options options = createOptions();
+		// create the parser
+		CommandLineParser parser = new PosixParser();
+		try {
+			// parse the command line arguments
+			CommandLine line = parser.parse(options, args);
+			if (line.hasOption("help")) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp("LSH", options);
+			}
+			evaluateCLIParameters(line);
+			if (line.hasOption("simulate")) {
+				LSHRunnerImpl lshRunner = new LSHRunnerImpl();
+				lshRunner.runSimulationBenchmark(line
+						.hasOption("loadSimulationInputFile"));
+	
+			} else if (line.hasOption("loadVectorFile")
+					&& line.hasOption("searchVectorId")) {
+				LSHRunnerImpl lshRunner = new LSHRunnerImpl();
+				lshRunner.runSearch(
+						line.getOptionValue("searchVectorId"),
+						SIMILARITY_THRESHOLD, TOP_K, NTHREADS,
+						NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
+			} else if (line.hasOption("loadVectorFile")
+					&& !line.hasOption("searchVectorId")) {
+				LSHRunnerImpl lshRunner = new LSHRunnerImpl(
+						line.getOptionValue("loadVectorFile"));
+				lshRunner.runLSH(NTHREADS, CHUNK_SIZE_CLASSIFIER_WORKER,
+						NUMBER_OF_RANDOM_VECTORS_d);
+			}
+		} catch (ParseException exp) {
+			// oops, something went wrong
+			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
 		}
 	}
 
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
-	public List<Pair<Double, Long>> runSearch(String inputFilePath,
-			String searchVectorId, double SIMILARITY_THRESHOLD, int TOP_K,
-			int NTHREADS, int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
+	@Override
+	public SortedSet<Pair<Double, Long>> runSearch(String searchVectorId,
+			double SIMILARITY_THRESHOLD, int TOP_K, int NTHREADS,
+			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
+		if(inputVectors==null){
+			throw new IllegalStateException("No input vectors were loaded before.");
+		}
 		FeatureVector<? extends Number> searchVector = null;
 		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
-		try {
-			logger.info("loading data");
-			FileInputStream fis = new FileInputStream(inputFilePath);
-			ObjectInputStream o = new ObjectInputStream(fis);
-			inputVectors = (Set<FeatureVector<? extends Number>>) o
-					.readObject();
-			o.close();
-			logger.info("loaded data, looking for search vector");
-			for (FeatureVector<? extends Number> featureVector : inputVectors) {
-				if (featureVector.getId().equals(Long.valueOf(searchVectorId))) {
-					searchVector = featureVector;
-					break;
-				}
+		logger.info("loaded data, looking for search vector");
+		for (FeatureVector<? extends Number> featureVector : inputVectors) {
+			if (featureVector.getId().equals(Long.valueOf(searchVectorId))) {
+				searchVector = featureVector;
+				break;
 			}
-			logger.info("search vector found, starting LSH lookup.");
-			if (searchVector == null) {
-				throw new IllegalArgumentException(
-						"the given search vector id was not found!");
-			}
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		}
+		logger.info("search vector found, starting LSH lookup.");
+		if (searchVector == null) {
+			throw new IllegalArgumentException(
+					"the given search vector id was not found!");
 		}
 
-		List<Pair<Double, Long>> neighbours = LSH.searchNeighbours(
+		SortedSet<Pair<Double, Long>> neighbours = LSH.searchNeighbours(
 				searchVector, inputVectors, SIMILARITY_THRESHOLD, TOP_K,
 				NTHREADS, NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 		// List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(

@@ -7,8 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +23,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunnerImplementation;
+import de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunnerImpl;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
@@ -42,7 +45,7 @@ public class LSH {
 
 	private static Random rnd = new Random();
 
-	public static List<Pair<Double, Long>> searchNeighbours(
+	public static SortedSet<Pair<Double, Long>> searchNeighbours(
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			double maxDistance, int topK, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
@@ -99,7 +102,7 @@ public class LSH {
 		pemutationExecutor.shutdown();
 
 		logger.trace("started filtering of neighbours by threshold");
-		List<Pair<Double, Long>> resultList = new ArrayList<Pair<Double, Long>>();
+		NavigableSet<Pair<Double, Long>> resultList = new TreeSet<Pair<Double, Long>>();
 		for (Entry<Long, Double> hammingDistances : candidates.entrySet()) {
 			if (hammingDistances.getValue() <= maxDistance) {
 				resultList.add(new ImmutablePair<Double, Long>(hammingDistances
@@ -108,7 +111,16 @@ public class LSH {
 		}
 		logger.trace("finished filtering of neighbours by threshold");
 
-		return resultList;
+		//do topK return
+		if(resultList.size()<=topK){
+			return resultList.descendingSet();
+		}else{
+			NavigableSet<Pair<Double, Long>> resultListTopK = new TreeSet<Pair<Double, Long>>();
+			for(int i = 0; i <= topK; i++){
+				resultListTopK.add(resultList.descendingSet().pollFirst());
+			}
+			return resultListTopK;
+		}
 	}
 
 	public static Set<FeatureVector<? extends Number>> computeLSH(
@@ -289,10 +301,10 @@ public class LSH {
 			// variance 1 weights.
 
 			FeatureVector<Double> dI = null;
-			if (LSHRunnerImplementation.vectorImplementationClass
+			if (LSHRunnerImpl.vectorImplementationClass
 					.equals(PrimitiveMapFeatureVector.class)) {
 				dI = new PrimitiveMapFeatureVector<Double>(di, dimensionality);
-			} else if (LSHRunnerImplementation.vectorImplementationClass
+			} else if (LSHRunnerImpl.vectorImplementationClass
 					.equals(NumberListFeatureVector.class)) {
 				dI = new NumberListFeatureVector<Double>((long) di);
 			}

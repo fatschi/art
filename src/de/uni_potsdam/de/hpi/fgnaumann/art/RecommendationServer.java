@@ -12,10 +12,16 @@ import org.apache.xmlrpc.server.PropertyHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServer;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
+
+import de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.FeatureGenerator;
+import de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.FeatureGeneratorImpl;
+
 /**
- * An standalone Apache XML-RPC-server allowing to communicate with a running instance of a {@link LSHRunner}.
+ * An standalone Apache XML-RPC-server allowing to communicate with a running
+ * instance of a {@link LSHRunner}.
+ * 
  * @author fabian
- *
+ * 
  */
 public class RecommendationServer {
 
@@ -23,36 +29,43 @@ public class RecommendationServer {
 
 	public static void main(String[] args) throws Exception {
 		// create Options object
-				Options options = createOptions();
-				// create the parser
-				CommandLineParser parser = new PosixParser();
-				try {
-					// parse the command line arguments
-					CommandLine line = parser.parse(options, args);
-					if (line.hasOption("help")) {
-						HelpFormatter formatter = new HelpFormatter();
-						formatter.printHelp("RecommendationServer", options);
-					}
-					evaluateCLIParameters(line);
-				} catch (ParseException exp) {
-					// oops, something went wrong
-					System.err.println("Parsing failed.  Reason: " + exp.getMessage());
-				}
+		Options options = createOptions();
+		// create the parser
+		CommandLineParser parser = new PosixParser();
+		try {
+			// parse the command line arguments
+			CommandLine line = parser.parse(options, args);
+			if (line.hasOption("help")) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp("RecommendationServer", options);
+			}
+			evaluateCLIParameters(line);
+		} catch (ParseException exp) {
+			// oops, something went wrong
+			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
+		}
 		WebServer webServer = new WebServer(PORT);
-	      XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
-	      PropertyHandlerMapping phm = new PropertyHandlerMapping();
-	      LSHRunner lshRunner = new LSHRunnerImplementation();
-	      phm.setRequestProcessorFactoryFactory(new LSHRunnerRequestProcessorFactoryFactory(lshRunner));
-	      phm.setVoidMethodEnabled(true);
-	      phm.addHandler(LSHRunner.class.getName(), LSHRunner.class);
-	      xmlRpcServer.setHandlerMapping(phm);
+		XmlRpcServer xmlRpcServer = webServer.getXmlRpcServer();
+		PropertyHandlerMapping phm = new PropertyHandlerMapping();
+		LSHRunner lshRunner = new LSHRunnerImpl();
+		FeatureGenerator featureGenerator = new FeatureGeneratorImpl();
+		phm.setRequestProcessorFactoryFactory(new MyRequestProcessorFactoryFactory(
+				lshRunner, featureGenerator));
+		phm.setVoidMethodEnabled(true);
+		phm.setTypeConverterFactory(xmlRpcServer.getTypeConverterFactory());
+		phm.addHandler(LSHRunner.class.getName(), lshRunner.getClass());
+		phm.addHandler(FeatureGenerator.class.getName(),
+				featureGenerator.getClass());
+		xmlRpcServer.setHandlerMapping(phm);
 
-	      XmlRpcServerConfigImpl serverConfig = (XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
-	      serverConfig.setEnabledForExtensions(true);
-	      serverConfig.setContentLengthOptional(false);
-	      webServer.start();
+		XmlRpcServerConfigImpl serverConfig = (XmlRpcServerConfigImpl) xmlRpcServer
+				.getConfig();
+		serverConfig.setEnabledForExtensions(true);
+		serverConfig.setEnabledForExceptions(true);
+		serverConfig.setContentLengthOptional(false);
+		webServer.start();
 	}
-	
+
 	@SuppressWarnings("static-access")
 	private static Options createOptions() {
 		Options cliOptions = new Options();
@@ -68,8 +81,7 @@ public class RecommendationServer {
 
 	private static void evaluateCLIParameters(CommandLine line) {
 		if (line.hasOption("port")) {
-			PORT = Integer.parseInt(line
-					.getOptionValue("port"));
+			PORT = Integer.parseInt(line.getOptionValue("port"));
 		}
 	}
 }

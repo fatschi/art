@@ -127,13 +127,13 @@ public class AllFeaturesDatabaseExtractor {
 				
 				// Test 3
 				HashSet<String> descriptiveNouns = null; // reset
-				descriptiveNouns = getAllNouns(FeatureType.BEST_WORST_N, 2, LIMIT);		  // Get all nouns from the corpus
+				descriptiveNouns = getAllNouns(FeatureType.BEST_WORST_N, 2, LIMIT, connectionString);		  // Get all nouns from the corpus
 				if (debug) {System.out.println("NOUN#=" + descriptiveNouns.size());}
 				Set<FeatureVector<Double>> articleFeatureVecs = new HashSet<FeatureVector<Double>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(descriptiveNouns.size());	
 				HashMap<String, Integer> globalFeaturePositionMap = new HashMap<String, Integer>(descriptiveNouns.size(),1.0f);
 				NounExtractor nE = new NounExtractor(); // Actual extractor is exchangable
-				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, nE);
+				long docCount = genFeatureVecs(descriptiveNouns, LIMIT, articleFeatureVecs, termInNumDocsCounts, globalFeaturePositionMap, nE, connectionString);
 				//TFIDF
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 				
@@ -150,6 +150,8 @@ public class AllFeaturesDatabaseExtractor {
 			}
 		} catch (ParseException exp) {
 			System.err.println("Parsing failed.  Reason: " + exp.getMessage());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		}
 
 	}
@@ -222,17 +224,6 @@ public class AllFeaturesDatabaseExtractor {
 		for (FeatureVector<Double> featureVec : articleFeatureVecs) {
 			
 			augment2TFIDF(featureVec, termInNumDocsCounts, docCount);
-//			for (int pos = 0; pos < featureVec.getDimensionality(); pos++) {
-//				if(featureVec.getValue(pos)==null){
-//					continue;
-//				}
-//				double TF  = featureVec.getValue(pos);
-//				double IDF = Math.log((double) docCount/
-//						    (double) termInNumDocsCounts.get(pos));
-//				
-//				// Update the TF value to the TF IDF value
-//				featureVec.setValue(pos, (double) (TF*IDF));
-//			}
 		}
 		return articleFeatureVecs;
 	}
@@ -272,10 +263,11 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param articleFeatureVecs List of per document noun counts (TF)
 	 * @param termInNumDocsCounts (IDF word in docs counts)
 	 * @param globalFeaturePositionMap (noun Order each article feature will follow. So they all have the same order)
+	 * @param connectionString 
 	 * @return
 	 */
 	public static long genFeatureVecs(HashSet<String> commonNouns, long limit, Set<FeatureVector<Double>> articleFeatureVecs, 
-			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, NounExtractor nE) {
+			HashMap<Integer, Long> termInNumDocsCounts, HashMap<String, Integer> globalFeaturePositionMap, NounExtractor nE, String connectionString) {
 		/** IDF parts. */
 		long doccount = 0;
 		
@@ -447,11 +439,14 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param ftype
 	 * @param numWorstBest (only meaningful with {@link FeatureType.BEST_WORST_N})
 	 * @param articleLimit number of articles to process (-1 means no limit).
+	 * @param connectionString 
 	 * @return The set of collection-wide nouns.
+	 * @throws ClassNotFoundException 
+	 * @throws SQLException 
+	 * @throws IOException 
 	 */
-	public static HashSet<String> getAllNouns(FeatureType ftype, int numWorstBest, int articleLimit) {
+	public static HashSet<String> getAllNouns(FeatureType ftype, int numWorstBest, int articleLimit, String connectionString) throws ClassNotFoundException, SQLException, IOException {
 		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
-		try {
 			if (connectionString.contains("sqlite")) {
 				Class.forName("org.sqlite.JDBC");
 			} else if (connectionString.contains("postgresql")) {
@@ -528,78 +523,13 @@ public class AllFeaturesDatabaseExtractor {
 					}
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
+		
 				resultSet.close();
 				statement.close();
 				connection.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 		
 		return collectionMap;
 	}
-	
-//	private static HashSet<String> getDescriptiveNouns() {
-//		HashSet<String> collectionMap = new HashSet<String>(1000, 0.95f);
-//		try {
-//			if (connectionString.contains("sqlite")) {
-//				Class.forName("org.sqlite.JDBC");
-//			} else if (connectionString.contains("postgresql")) {
-//				Class.forName("org.postgresql.Driver");
-//			} else {
-//				throw new IllegalArgumentException(
-//						"There is no known DBMS for your given connection string: "
-//								+ connectionString);
-//			}
-//
-//			connection = DriverManager
-//					.getConnection(connectionString);
-//			statement = connection.createStatement();
-//			resultSet = statement
-//					.executeQuery("SELECT id, cleaned_text FROM rss_article;");
-//			
-//			
-//			// Create nounextraction object
-//			NounExtractor nE = new NounExtractor();
-//			int lines = 0;
-//			while (resultSet.next()) {
-////				System.out.println(resultSet.getString("id")+";"+resultSet.getString("cleaned_text"));
-//				
-//				// Pattern
-//				// Ends with. previous page
-//				String fulltext = resultSet.getString("cleaned_text");
-//				// Skip articles that have no content.
-//				if(fulltext==null || fulltext.length() < 50) {
-//					continue;
-//				}
-//				
-//				// Feedback
-//				if (lines++%1000 ==0 && debug) {
-//					System.out.println("Processed Lines:" + (lines-1));
-//				}
-//	
-//				fulltext = cleanText(fulltext);
-//				
-//				getNeededNounSet(collectionMap, fulltext, nE);
-//			}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		} finally {
-//			try {
-//				resultSet.close();
-//				statement.close();
-//				connection.close();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		
-//		return collectionMap;
-//	}
 	
 	/**
 	 * Extends the global map by a list of at most one new noun needed to describe ONE article.
