@@ -106,7 +106,7 @@ public class AllFeaturesDatabaseExtractor {
 				formatter.printHelp("LSH", options);
 			}
 			if (evaluateCLIParameters(line)) {
-				int LIMIT = 1000;
+				int LIMIT = -1;
 
 				// // Test 1
 				// HashSet<String> descriptiveNouns =
@@ -308,7 +308,7 @@ public class AllFeaturesDatabaseExtractor {
 		// Sort the global features so they appear in the same order in ever
 		// article feature vector.
 		globalFeaturePositionMap = toSortedGlobalFeatureMap(commonNouns);
-		//logger.trace(globalFeaturePositionMap);
+		// logger.trace(globalFeaturePositionMap);
 
 		String LIMIT = "";
 		if (limit != -1) {
