@@ -168,14 +168,26 @@ public class AllFeaturesDatabaseExtractor {
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 
 				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.lsh");
-
+				
 				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
 				printFeatureVec(tfidfFeatures);
+				
+				writeIDFcounts(termInNumDocsCounts, "corpora/IDFs.lsh");
+				termInNumDocsCounts= null;
+				HashMap<Integer, Long> IDFcounts = readIDFcounts( "corpora/IDFs.lsh");
+				
+				writeGolbalPositionMAP(globalFeaturePositionMap,"corpora/WordFeaturePosition.lsh");
+				globalFeaturePositionMap.clear();
+				globalFeaturePositionMap = readGlobalPositionMAP("corpora/WordFeaturePosition.lsh");
+				
+				writeDocCount(docCount, "corpora/WordFeaturePosition.lsh");
+				docCount = readDocCount("corpora/WordFeaturePosition.lsh");
+				
 
 				// TODO TRY THIS OUT = Add new feature
 				String uncleanedArticle = "Bla di bla ich bin ein Test article";
 				long testId = 0;
-				addFeature(articleFeatureVecs, termInNumDocsCounts,
+				addFeature(articleFeatureVecs, IDFcounts,
 						globalFeaturePositionMap, uncleanedArticle, nE,
 						docCount, testId);
 
@@ -186,6 +198,134 @@ public class AllFeaturesDatabaseExtractor {
 			e.printStackTrace();
 		}
 
+	}
+
+	private static long readDocCount(String path) {
+		long docCount = 0L;
+		try {
+			// use buffering
+			InputStream file = new FileInputStream(path);
+			InputStream buffer = new BufferedInputStream(file);
+			ObjectInput input = new ObjectInputStream(buffer);
+			try {
+				// deserialize the MAP
+				docCount = (Long) input.readObject();
+			} finally {
+				input.close();
+			}
+		} catch (ClassNotFoundException ex) {
+			logger.error("Cannot perform input. Class not found." + ex);
+		} catch (IOException ex) {
+			logger.error("Cannot perform input. " + ex);
+		}
+		if (docCount <1) {
+			throw new NumberFormatException("Document count is too low. Value:" + docCount);
+		}
+		return docCount;
+	}
+
+	private static void writeDocCount(long docCount, String path) {
+		try {
+			// use buffering
+			OutputStream file = new FileOutputStream(path);
+			OutputStream buffer = new BufferedOutputStream(file);
+			ObjectOutput output = new ObjectOutputStream(buffer);
+			try {
+				output.writeObject(docCount);
+			} finally {
+				output.close();
+			}
+		} catch (IOException ex) {
+			logger.error("Cannot perform output." + ex);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static HashMap<String, Integer> readGlobalPositionMAP(String path) {
+		HashMap<String, Integer> wordPositions = null;
+		try {
+			// use buffering
+			InputStream file = new FileInputStream(path);
+			InputStream buffer = new BufferedInputStream(file);
+			ObjectInput input = new ObjectInputStream(buffer);
+			try {
+				// deserialize the MAP
+				wordPositions = (HashMap<String, Integer>) input.readObject();
+			} finally {
+				input.close();
+			}
+		} catch (ClassNotFoundException ex) {
+			logger.error("Cannot perform input. Class not found." + ex);
+		} catch (IOException ex) {
+			logger.error("Cannot perform input. " + ex);
+		}
+		return wordPositions;
+	}
+
+	private static void writeGolbalPositionMAP(
+			HashMap<String, Integer> globalFeaturePositionMap, String path) {
+		try {
+			// use buffering
+			OutputStream file = new FileOutputStream(path);
+			OutputStream buffer = new BufferedOutputStream(file);
+			ObjectOutput output = new ObjectOutputStream(buffer);
+			try {
+				output.writeObject(globalFeaturePositionMap);
+			} finally {
+				output.close();
+			}
+		} catch (IOException ex) {
+			logger.error("Cannot perform output." + ex);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	/**
+	 * Read back the IDFtermCounts.
+	 * @param path
+	 * @return TermID, and Count
+	 */
+	private static HashMap<Integer, Long> readIDFcounts(String path) {
+		HashMap<Integer, Long> recoveredSet = null;
+		try {
+			// use buffering
+			InputStream file = new FileInputStream(path);
+			InputStream buffer = new BufferedInputStream(file);
+			ObjectInput input = new ObjectInputStream(buffer);
+			try {
+				// deserialize the List
+				recoveredSet = (HashMap<Integer, Long>) input.readObject();
+			} finally {
+				input.close();
+			}
+		} catch (ClassNotFoundException ex) {
+			logger.error("Cannot perform input. Class not found." + ex);
+		} catch (IOException ex) {
+			logger.error("Cannot perform input. " + ex);
+		}
+		return recoveredSet;
+	}
+
+	/**
+	 * Save the counts necessary to compute IDFs.
+	 * @param IDFCounts
+	 * @param path Destination File
+	 */
+	private static void writeIDFcounts(HashMap<Integer, Long> IDFCounts,
+			String path) {
+		try {
+			// use buffering
+			OutputStream file = new FileOutputStream(path);
+			OutputStream buffer = new BufferedOutputStream(file);
+			ObjectOutput output = new ObjectOutputStream(buffer);
+			try {
+				output.writeObject(IDFCounts);
+			} finally {
+				output.close();
+			}
+		} catch (IOException ex) {
+			logger.error("Cannot perform output." + ex);
+		}
 	}
 
 	static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs,
@@ -375,6 +515,18 @@ public class AllFeaturesDatabaseExtractor {
 		return doccount;
 	}
 
+	/**
+	 * Method to add a new article feature vector to the collection.
+	 * @param articleFeatureVecs
+	 * @param termInNumDocsCounts
+	 * @param globalFeaturePositionMap
+	 * @param fulltext
+	 * @param nE
+	 * @param docCount
+	 * @param id
+	 * @throws NumberFormatException
+	 * @throws SQLException
+	 */
 	static void addFeature(Set<FeatureVector<Double>> articleFeatureVecs,
 			HashMap<Integer, Long> termInNumDocsCounts,
 			HashMap<String, Integer> globalFeaturePositionMap, String fulltext,
