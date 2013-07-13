@@ -9,7 +9,6 @@ import java.util.Set;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.util.Bit;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
 
 /**
  * A more sophisticated implementation of {@link FeatureVector} backed up by
@@ -20,19 +19,15 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
  * @param <T>
  *            The type of the values the vector contains.
  */
-public class PrimitiveMapFeatureVector<T extends Number> implements
+public class PrimitiveMapFeatureVector<T extends Number> extends AbstractFeatureVector<T> implements
 		FeatureVector<T> {
 
 	private static final long serialVersionUID = -514366940793968554L;
 	private Int2DoubleAVLTreeMap featuresMap;
 
-	private Long id;
-	private Integer dimensions;
-	private SignatureVector localitySensitiveHashed;
-
 	@SafeVarargs
 	public PrimitiveMapFeatureVector(Long id, Integer dimensionality) {
-		this.dimensions = dimensionality;
+		this.dimensionality = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap();
 		featuresMap.defaultReturnValue(0);
 		this.id = id;
@@ -40,7 +35,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 
 	@SafeVarargs
 	public PrimitiveMapFeatureVector(Long id, T... features) {
-		this.dimensions = features.length;
+		this.dimensionality = features.length;
 		featuresMap = new Int2DoubleAVLTreeMap();
 		featuresMap.defaultReturnValue(0);
 		for (int i = 0; i < features.length; i++) {
@@ -53,7 +48,7 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	@SafeVarargs
 	public PrimitiveMapFeatureVector(Long id, Integer dimensionality,
 			Map<Integer, Double> features) {
-		this.dimensions = dimensionality;
+		this.dimensionality = dimensionality;
 		featuresMap = new Int2DoubleAVLTreeMap(features);
 		featuresMap.defaultReturnValue(0);
 		this.id = id;
@@ -68,12 +63,10 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 	}
 
 	@Override
-	public Integer getDimensionality() {
-		return this.dimensions;
-	}
-
-	@Override
 	public void setValue(Integer dimension, T value) {
+		if(dimension>=dimensionality){
+			throw new IllegalArgumentException("The given dimension exceeds the dimensionality of this vector: " + dimension);
+		}
 		this.featuresMap.put(dimension.intValue(), value.floatValue());
 	}
 
@@ -124,22 +117,4 @@ public class PrimitiveMapFeatureVector<T extends Number> implements
 			return true; // no, war vorher 1?!
 		}
 	}
-
-	@Override
-	public Long getId() {
-		return this.id;
-	}
-
-	@Override
-	public SignatureVector getLocalitySensitiveHashed() {
-		return this.localitySensitiveHashed;
-	}
-
-	@Override
-	public String toString() {
-		return ("FeatureVector [id=" + id + ", features=" + this.featuresMap
-				+ ", localitySensitiveHashed=" + getLocalitySensitiveHashed()
-				+ ", features=" + featuresMap + "]");
-	}
-
 }

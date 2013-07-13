@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import qtag.Tagger;
 
 import com.aliasi.sentences.MedlineSentenceModel;
@@ -32,7 +35,10 @@ import de.l3s.boilerpipe.extractors.ArticleExtractor;
  * @author Nils Rethmeier
  */
 public class NounExtractor {
-
+	
+	private static Logger logger = LogManager
+			.getFormatterLogger(NounExtractor.class.getName());
+	
 	static final TokenizerFactory TOKENIZER_FACTORY = IndoEuropeanTokenizerFactory.INSTANCE;
 	static final SentenceModel SENTENCE_MODEL = new MedlineSentenceModel();
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
@@ -104,7 +110,7 @@ public class NounExtractor {
 						.replaceAll("\n", " ") // turn article into one lines
 						+ "\n"); // Write article into one line
 				if (++count % 100 == 0) {
-					System.out.println(count + " pages processed");
+					logger.trace(count + " pages processed");
 				}
 
 			}
@@ -170,7 +176,7 @@ public class NounExtractor {
 				paragraph.append('\n');
 			}
 			String para = paragraph.toString().replaceAll("''", "'");
-			System.out.println(FULLTEXT_EXTRACTOR.getText(para));
+			logger.trace(FULLTEXT_EXTRACTOR.getText(para));
 		} catch (Exception e) {
 		} finally {
 			br.close();
@@ -220,7 +226,7 @@ public class NounExtractor {
 			// feedback as percent
 			if (linecount % 100000 == 0) {
 				// break;
-				System.out.println(linecount);
+				logger.trace(linecount);
 			}
 
 			// To catch non buffered left overs. Do the last few lines.
@@ -240,7 +246,7 @@ public class NounExtractor {
 		}
 
 		// STATS
-		System.out.println("# lines processed:" + linecount);
+		logger.trace("# lines processed:" + linecount);
 		bw.close();
 	}
 
@@ -413,7 +419,7 @@ public class NounExtractor {
 																	// article?
 
 			// if (articleNounCount==null) {
-			// System.out.println(articleNoun + ":" + articleNouns.toString());
+			// logger.trace(articleNoun + ":" + articleNouns.toString());
 			// System.exit(1);
 			// }
 

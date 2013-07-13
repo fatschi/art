@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.collections.bag.TreeBag;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.SignatureVector;
@@ -18,6 +20,8 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.ComparableBitSetSignatur
  */
 public class PermutationWorker implements
 		Callable<Map<Long, Double>> {
+	private static Logger logger = LogManager.getFormatterLogger(PermutationWorker.class
+			.getName());
 
 	private int[] randomPermutation;
 	private FeatureVector<? extends Number> searchVector;

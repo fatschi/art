@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +26,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunnerImpl;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.FisherYates;
 import de.uni_potsdam.de.hpi.fgnaumann.art.permutation.PermutationGenerator;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
-import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberListFeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberArrayFeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 /**
@@ -45,7 +44,7 @@ public class LSH {
 
 	private static Random rnd = new Random();
 
-	public static SortedSet<Pair<Double, Long>> searchNeighbours(
+	public static NavigableSet<Pair<Double, Long>> searchNeighbours(
 			FeatureVector<?> searchVector, Set<FeatureVector<?>> inputVectors,
 			double maxDistance, int topK, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B) {
@@ -113,33 +112,28 @@ public class LSH {
 
 		// do topK return
 		if (resultList.size() <= topK) {
-			return resultList.descendingSet();
+			return resultList;
 		} else {
 			NavigableSet<Pair<Double, Long>> resultListTopK = new TreeSet<Pair<Double, Long>>();
 			for (int i = 0; i <= topK; i++) {
-				resultListTopK.add(resultList.descendingSet().pollFirst());
+				resultListTopK.add(resultList.pollFirst());
 			}
 			return resultListTopK;
 		}
 	}
 
-	public static Set<FeatureVector<? extends Number>> computeLSH(
-			Set<FeatureVector<? extends Number>> inputVectors, int NTHREADS,
+	public static NavigableSet<FeatureVector<? extends Number>> computeLSH(
+			NavigableSet<FeatureVector<? extends Number>> inputVectors, int NTHREADS,
 			int CHUNK_SIZE_CLASSIFIER_WORKER, int NUMBER_OF_RANDOM_VECTORS_d) {
 
 		// step 2 of paper: generation of random hyperplanes
 		logger.trace("starting generation of random vectors");
-		FeatureVector<? extends Number> exampleVector;
-		Iterator<FeatureVector<? extends Number>> inputVectorsIterator = inputVectors
-				.iterator();
-		if (inputVectorsIterator.hasNext()) {
-			exampleVector = inputVectorsIterator.next();
-		} else {
+		if (inputVectors.first()==null) {
 			throw new IllegalArgumentException(
 					"Your input vectors seem to be empty.");
 		}
 		Set<FeatureVector<? extends Number>> randomVectors = generateRandomWeightVectors(
-				NUMBER_OF_RANDOM_VECTORS_d, exampleVector.getDimensionality());
+				NUMBER_OF_RANDOM_VECTORS_d, inputVectors.first().getDimensionality());
 		logger.trace("finished generation of random vectors");
 
 		// step 3 of paper: classification
@@ -305,8 +299,8 @@ public class LSH {
 					.equals(PrimitiveMapFeatureVector.class)) {
 				dI = new PrimitiveMapFeatureVector<Double>(di, dimensionality);
 			} else if (LSHRunnerImpl.vectorImplementationClass
-					.equals(NumberListFeatureVector.class)) {
-				dI = new NumberListFeatureVector<Double>((long) di);
+					.equals(NumberArrayFeatureVector.class)) {
+				dI = new NumberArrayFeatureVector<Double>((long) di, dimensionality);
 			}
 
 			for (int ki = 0; ki < dimensionality; ki++) {

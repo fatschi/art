@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 import de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.AllFeaturesDatabaseExtractor.FeatureType;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
 
 public class FeatureGeneratorImpl implements FeatureGenerator {
 
-	public Set<FeatureVector<Double>> articleFeatureVecs = new HashSet<FeatureVector<Double>>();
+	public NavigableSet<FeatureVector<Double>> articleFeatureVecs = new TreeSet<FeatureVector<Double>>();
 	public HashMap<Integer, Long> termInNumDocsCounts = null;
 	public HashMap<String, Integer> globalFeaturePositionMap = null;
 	public NounExtractor nE = null; // Actual extractor is exchangeable
@@ -28,7 +29,7 @@ public class FeatureGeneratorImpl implements FeatureGenerator {
 		descriptiveNouns = AllFeaturesDatabaseExtractor.getAllNouns(ftype,
 				featureN, limit, connectionString); // Get all nouns from the
 													// corpus
-		articleFeatureVecs = new HashSet<FeatureVector<Double>>();
+		articleFeatureVecs = new TreeSet<FeatureVector<Double>>();
 		termInNumDocsCounts = new HashMap<Integer, Long>(
 				descriptiveNouns.size());
 		globalFeaturePositionMap = new HashMap<String, Integer>(

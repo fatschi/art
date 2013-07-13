@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -38,7 +39,9 @@ import org.apache.logging.log4j.Logger;
 
 import de.l3s.boilerpipe.BoilerpipeProcessingException;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
+import de.uni_potsdam.de.hpi.fgnaumann.art.LSHRunnerImpl;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.FeatureVector;
+import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.NumberArrayFeatureVector;
 import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVector;
 
 /**
@@ -70,7 +73,7 @@ public class AllFeaturesDatabaseExtractor {
 	static public Pattern multiline = Pattern.compile("\n");
 	static public int PPLEN = new String("Previous Page").length();
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
-	static boolean debug = true; // Print debug info
+	static final int LIMIT = 100;
 
 	/**
 	 * 
@@ -106,13 +109,12 @@ public class AllFeaturesDatabaseExtractor {
 				formatter.printHelp("LSH", options);
 			}
 			if (evaluateCLIParameters(line)) {
-				int LIMIT = -1;
 
 				// // Test 1
 				// HashSet<String> descriptiveNouns =
 				// getAllNouns(FeatureType.BEST_WORST_N, 3, LIMIT); // Get all
 				// nouns from the corpus
-				// if (debug) {System.out.println("NOUN#=" +
+				// if (debug) {logger.trace("NOUN#=" +
 				// descriptiveNouns.size());}
 				// LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>
 				// articleFeatureVecs = new LinkedList<ImmutablePair<Long,
@@ -131,7 +133,7 @@ public class AllFeaturesDatabaseExtractor {
 				// HashSet<String> descriptiveNouns =
 				// getAllNouns(FeatureType.BEST, -1, LIMIT); // Get all nouns
 				// from the corpus
-				// if (debug) {System.out.println("NOUN#=" +
+				// if (debug) {logger.trace("NOUN#=" +
 				// descriptiveNouns.size());}
 				// LinkedList<ImmutablePair<Long, HashMap<Integer, Double>>>
 				// articleFeatureVecs = new LinkedList<ImmutablePair<Long,
@@ -151,10 +153,8 @@ public class AllFeaturesDatabaseExtractor {
 				descriptiveNouns = getAllNouns(FeatureType.BEST_WORST_N, 2,
 						LIMIT, connectionString); // Get all nouns from the
 													// corpus
-				if (debug) {
-					System.out.println("NOUN#=" + descriptiveNouns.size());
-				}
-				Set<FeatureVector<Double>> articleFeatureVecs = new HashSet<FeatureVector<Double>>();
+				logger.trace("NOUN#=" + descriptiveNouns.size());
+				NavigableSet<FeatureVector<Double>> articleFeatureVecs = new TreeSet<FeatureVector<Double>>();
 				HashMap<Integer, Long> termInNumDocsCounts = new HashMap<Integer, Long>(
 						descriptiveNouns.size());
 				HashMap<String, Integer> globalFeaturePositionMap = new HashMap<String, Integer>(
@@ -188,8 +188,8 @@ public class AllFeaturesDatabaseExtractor {
 
 	}
 
-	static void writeFeatures(Set<FeatureVector<Double>> articleFeatureVecs,
-			String path) {
+	static void writeFeatures(
+			NavigableSet<FeatureVector<Double>> articleFeatureVecs, String path) {
 		try {
 			// use buffering
 			OutputStream file = new FileOutputStream(path);
@@ -354,12 +354,29 @@ public class AllFeaturesDatabaseExtractor {
 
 				fulltext = cleanText(fulltext);
 
-				// Generate augmentedTF feature vector. Also get IDF counts.
-				articleFeatureVecs.add(new PrimitiveMapFeatureVector<Double>(
-						Long.parseLong(resultSet.getString("id")),
-						globalFeaturePositionMap.size(), nE.generateFeature(
-								globalFeaturePositionMap, termInNumDocsCounts,
-								fulltext)));
+				if (LSHRunnerImpl.vectorImplementationClass
+						.equals(PrimitiveMapFeatureVector.class)) {
+					// Generate augmentedTF feature vector. Also get IDF counts.
+					articleFeatureVecs
+							.add(new PrimitiveMapFeatureVector<Double>(Long
+									.parseLong(resultSet.getString("id")),
+									globalFeaturePositionMap.size(), nE
+											.generateFeature(
+													globalFeaturePositionMap,
+													termInNumDocsCounts,
+													fulltext)));
+				} else if (LSHRunnerImpl.vectorImplementationClass
+						.equals(NumberArrayFeatureVector.class)) {
+					// Generate augmentedTF feature vector. Also get IDF counts.
+					articleFeatureVecs
+							.add(new NumberArrayFeatureVector<Double>(Long
+									.parseLong(resultSet.getString("id")),
+									globalFeaturePositionMap.size(), nE
+											.generateFeature(
+													globalFeaturePositionMap,
+													termInNumDocsCounts,
+													fulltext)));
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -382,10 +399,20 @@ public class AllFeaturesDatabaseExtractor {
 			throws NumberFormatException, SQLException {
 
 		// Get TF Info.
-		PrimitiveMapFeatureVector<Double> articleFeature = new PrimitiveMapFeatureVector<Double>(
-				id, globalFeaturePositionMap.size(), nE.generateFeature(
-						globalFeaturePositionMap, termInNumDocsCounts,
-						cleanText(fulltext)));
+		FeatureVector<Double> articleFeature = null;
+		if (LSHRunnerImpl.vectorImplementationClass
+				.equals(PrimitiveMapFeatureVector.class)) {
+			articleFeature = new PrimitiveMapFeatureVector<Double>(id,
+					globalFeaturePositionMap.size(), nE.generateFeature(
+							globalFeaturePositionMap, termInNumDocsCounts,
+							cleanText(fulltext)));
+		} else if (LSHRunnerImpl.vectorImplementationClass
+				.equals(NumberArrayFeatureVector.class)) {
+			articleFeature = new NumberArrayFeatureVector<Double>(id,
+					globalFeaturePositionMap.size(), nE.generateFeature(
+							globalFeaturePositionMap, termInNumDocsCounts,
+							cleanText(fulltext)));
+		}
 
 		// Add IDF info.
 		articleFeatureVecs.add(augment2TFIDF(articleFeature,
@@ -527,15 +554,15 @@ public class AllFeaturesDatabaseExtractor {
 		int lines = 0;
 		while (resultSet.next() && (lines != articleLimit)) {
 			// Feedback
-			if (++lines % 1000 == 0 && debug) {
-				System.out.println("Processed Lines:" + (lines));
+			if (++lines % 10000 == 0) {
+				logger.trace("Processed Lines:" + (lines));
 			}
 
 			// Pattern
 			// Ends with. previous page
 			String fulltext = resultSet.getString("cleaned_text");
 			// Skip articles that have no content.
-			if (fulltext == null || fulltext.length() < 50) {
+			if (fulltext == null || fulltext.length() < MIN_ARTICLE_LENGTH()) {
 				continue;
 			}
 
@@ -594,6 +621,10 @@ public class AllFeaturesDatabaseExtractor {
 		connection.close();
 
 		return collectionMap;
+	}
+
+	private static int MIN_ARTICLE_LENGTH() {
+		return 50;
 	}
 
 	/**

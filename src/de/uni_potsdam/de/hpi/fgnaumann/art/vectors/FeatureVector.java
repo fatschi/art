@@ -12,7 +12,7 @@ import java.util.Set;
  *            The type of values contained in the Vector.
  */
 public interface FeatureVector<T extends Number> extends Vector<T>,
-		Serializable {
+		Serializable, Comparable<FeatureVector<T>>{
 	Long getId();
 
 	void createLSH(Set<FeatureVector<? extends Number>> randomVectors);
