@@ -30,12 +30,9 @@ public class ClassifierWorker implements Runnable {
 
 	@Override
 	public void run() {
-		int i=0;
 		for (FeatureVector<? extends Number> inputVector : workingChunk) {
 			inputVector.createLSH(randomWeightVectors);
 			//logger.trace("classified vector "+i+" of "+workingChunk.size()+": "+inputVector.getId());
-			
-			i++;
 		}
 		logger.trace("chunk done.");
 	}
