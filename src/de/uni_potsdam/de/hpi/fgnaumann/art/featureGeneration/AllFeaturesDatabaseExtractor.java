@@ -168,21 +168,21 @@ public class AllFeaturesDatabaseExtractor {
 				augment2TFIDF(articleFeatureVecs, termInNumDocsCounts, docCount);
 
 				writeFeatures(articleFeatureVecs, "corpora/augmentedTFIDF.lsh");
-				
+
 				Set<FeatureVector<? extends Number>> tfidfFeatures = readfeatures("corpora/augmentedTFIDF.lsh");
 				printFeatureVec(tfidfFeatures);
-				
+
 				writeIDFcounts(termInNumDocsCounts, "corpora/IDFs.lsh");
-				termInNumDocsCounts= null;
-				HashMap<Integer, Long> IDFcounts = readIDFcounts( "corpora/IDFs.lsh");
-				
-				writeGolbalPositionMAP(globalFeaturePositionMap,"corpora/WordFeaturePosition.lsh");
+				termInNumDocsCounts = null;
+				HashMap<Integer, Long> IDFcounts = readIDFcounts("corpora/IDFs.lsh");
+
+				writeGolbalPositionMAP(globalFeaturePositionMap,
+						"corpora/WordFeaturePosition.lsh");
 				globalFeaturePositionMap.clear();
 				globalFeaturePositionMap = readGlobalPositionMAP("corpora/WordFeaturePosition.lsh");
-				
+
 				writeDocCount(docCount, "corpora/WordFeaturePosition.lsh");
 				docCount = readDocCount("corpora/WordFeaturePosition.lsh");
-				
 
 				// TODO TRY THIS OUT = Add new feature
 				String uncleanedArticle = "Bla di bla ich bin ein Test article";
@@ -218,8 +218,9 @@ public class AllFeaturesDatabaseExtractor {
 		} catch (IOException ex) {
 			logger.error("Cannot perform input. " + ex);
 		}
-		if (docCount <1) {
-			throw new NumberFormatException("Document count is too low. Value:" + docCount);
+		if (docCount < 1) {
+			throw new NumberFormatException("Document count is too low. Value:"
+					+ docCount);
 		}
 		return docCount;
 	}
@@ -308,8 +309,10 @@ public class AllFeaturesDatabaseExtractor {
 
 	/**
 	 * Save the counts necessary to compute IDFs.
+	 * 
 	 * @param IDFCounts
-	 * @param path Destination File
+	 * @param path
+	 *            Destination File
 	 */
 	private static void writeIDFcounts(HashMap<Integer, Long> IDFCounts,
 			String path) {
@@ -534,6 +537,7 @@ public class AllFeaturesDatabaseExtractor {
 
 	/**
 	 * Method to add a new article feature vector to the collection.
+	 * 
 	 * @param articleFeatureVecs
 	 * @param termInNumDocsCounts
 	 * @param globalFeaturePositionMap

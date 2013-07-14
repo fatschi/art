@@ -46,7 +46,8 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVecto
 public class LSHRunnerImpl implements LSHRunner {
 
 	public static final Class<?> vectorImplementationClass = PrimitiveMapFeatureVector.class;
-	//public static final Class<?> vectorImplementationClass = NumberArrayFeatureVector.class;
+	// public static final Class<?> vectorImplementationClass =
+	// NumberArrayFeatureVector.class;
 
 	private static final int STORAGE_THRESHOLD = 0;
 
@@ -65,7 +66,7 @@ public class LSHRunnerImpl implements LSHRunner {
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
 	// simulation parameters
-	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
+	private static int NUMBER_OF_SIMULATION_VECTORS = 100;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
 	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
 	private static int SPARSITY = 10;
@@ -119,13 +120,14 @@ public class LSHRunnerImpl implements LSHRunner {
 	@Override
 	public void loadData(String filePath) throws IOException,
 			ClassNotFoundException {
-		//try to help gc
+		// try to help gc
 		inputVectors = null;
 		inputVectors = new TreeSet<FeatureVector<? extends Number>>();
 		logger.info("loading data");
 		FileInputStream fis = new FileInputStream(filePath);
 		ObjectInputStream o = new ObjectInputStream(fis);
-		inputVectors = (NavigableSet<FeatureVector<? extends Number>>) o.readObject();
+		inputVectors = (NavigableSet<FeatureVector<? extends Number>>) o
+				.readObject();
 		o.close();
 		logger.info("loaded data");
 	}
@@ -166,11 +168,10 @@ public class LSHRunnerImpl implements LSHRunner {
 			throw new IllegalStateException(
 					"No input vectors were loaded before.");
 		}
-		
+
 		logger.info("loaded data, looking for search vector");
 		FeatureVector<? extends Number> mockVector = null;
-		if (vectorImplementationClass
-				.equals(PrimitiveMapFeatureVector.class)) {
+		if (vectorImplementationClass.equals(PrimitiveMapFeatureVector.class)) {
 			mockVector = new PrimitiveMapFeatureVector<Integer>(searchVectorId,
 					0);
 		} else if (vectorImplementationClass
@@ -178,29 +179,64 @@ public class LSHRunnerImpl implements LSHRunner {
 			mockVector = new NumberArrayFeatureVector<Integer>(searchVectorId,
 					0);
 		}
-		FeatureVector<? extends Number> searchVector = inputVectors.ceiling(mockVector);
-		
+		FeatureVector<? extends Number> searchVector = inputVectors
+				.ceiling(mockVector);
+
 		if (searchVector == null) {
 			throw new IllegalArgumentException(
 					"the given search vector id was not found!");
 		}
-		
+
 		logger.info("search vector found, starting LSH lookup.");
-		
+
 		NavigableSet<Pair<Double, Long>> neighbours = LSH.searchNeighbours(
 				searchVector, inputVectors, SIMILARITY_THRESHOLD, TOP_K,
 				NTHREADS, NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
-		// List<Pair<Double, Long>> neighbours = LSH.computeNeighbours(
-		// searchVector, inputVectors, SIMILARITY_THRESHOLD, NTHREADS,
-		// CHUNK_SIZE_CLASSIFIER_WORKER, NUMBER_OF_RANDOM_VECTORS_d,
-		// NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());
 		}
-		return new ArrayList<Pair<Double,Long>>(neighbours);
+		return new ArrayList<Pair<Double, Long>>(neighbours);
 	}
-	
+
+	@Override
+	public List<Pair<Double, Long>> runSearch(Long searchVectorId,
+			double SIMILARITY_THRESHOLD, int TOP_K, int NTHREADS) {
+		if (inputVectors == null) {
+			throw new IllegalStateException(
+					"No input vectors were loaded before.");
+		}
+
+		logger.info("loaded data, looking for search vector");
+		FeatureVector<? extends Number> mockVector = null;
+		if (vectorImplementationClass.equals(PrimitiveMapFeatureVector.class)) {
+			mockVector = new PrimitiveMapFeatureVector<Integer>(searchVectorId,
+					0);
+		} else if (vectorImplementationClass
+				.equals(NumberArrayFeatureVector.class)) {
+			mockVector = new NumberArrayFeatureVector<Integer>(searchVectorId,
+					0);
+		}
+		FeatureVector<? extends Number> searchVector = inputVectors
+				.ceiling(mockVector);
+
+		if (searchVector == null) {
+			throw new IllegalArgumentException(
+					"the given search vector id was not found!");
+		}
+
+		logger.info("search vector found, starting LSH lookup.");
+
+		NavigableSet<Pair<Double, Long>> neighbours = LSH.searchNeighbours(
+				searchVector, inputVectors, SIMILARITY_THRESHOLD, TOP_K,
+				NTHREADS);
+
+		for (Pair<Double, Long> match : neighbours) {
+			logger.info(match.getValue() + " : " + match.getKey());
+		}
+		return new ArrayList<Pair<Double, Long>>(neighbours);
+	}
+
 	@Override
 	public List<Long> listVectorIds() {
 		if (inputVectors == null) {
@@ -208,23 +244,20 @@ public class LSHRunnerImpl implements LSHRunner {
 					"No input vectors were loaded before.");
 		}
 		List<Long> ids = new ArrayList<Long>();
-		for(FeatureVector<?> vector : inputVectors){
+		for (FeatureVector<?> vector : inputVectors) {
 			ids.add(vector.getId());
 		}
 		return ids;
 	}
-	
+
 	@Override
 	public FeatureVector<?> showVector(Long vectorId) {
 		FeatureVector<? extends Number> mockVector = null;
-		if (vectorImplementationClass
-				.equals(PrimitiveMapFeatureVector.class)) {
-			mockVector = new PrimitiveMapFeatureVector<Integer>(vectorId,
-					0);
+		if (vectorImplementationClass.equals(PrimitiveMapFeatureVector.class)) {
+			mockVector = new PrimitiveMapFeatureVector<Integer>(vectorId, 0);
 		} else if (vectorImplementationClass
 				.equals(NumberArrayFeatureVector.class)) {
-			mockVector = new NumberArrayFeatureVector<Integer>(vectorId,
-					0);
+			mockVector = new NumberArrayFeatureVector<Integer>(vectorId, 0);
 		}
 		return inputVectors.ceiling(mockVector);
 	}
@@ -246,11 +279,12 @@ public class LSHRunnerImpl implements LSHRunner {
 				LSHRunnerImpl lshRunner = new LSHRunnerImpl();
 				lshRunner.runSimulationBenchmark(line
 						.hasOption("loadSimulationInputFile"));
-	
+
 			} else if (line.hasOption("loadVectorFile")
 					&& line.hasOption("searchVectorId")) {
 				LSHRunnerImpl lshRunner = new LSHRunnerImpl();
-				lshRunner.runSearch(Long.valueOf(line.getOptionValue("searchVectorId")),
+				lshRunner.runSearch(
+						Long.valueOf(line.getOptionValue("searchVectorId")),
 						SIMILARITY_THRESHOLD, TOP_K, NTHREADS,
 						NUMBER_OF_PERMUTATIONS_q, WINDOW_SIZE_B);
 			} else if (line.hasOption("loadVectorFile")
@@ -280,7 +314,7 @@ public class LSHRunnerImpl implements LSHRunner {
 			boolean loadSimulationInputFile) {
 
 		FeatureVector<? extends Number> searchVector = null;
-		Set<FeatureVector<? extends Number>> inputVectors = null;
+		NavigableSet<FeatureVector<? extends Number>> inputVectors = null;
 		if (loadSimulationInputFile) {
 			try {
 				logger.trace(
@@ -290,7 +324,7 @@ public class LSHRunnerImpl implements LSHRunner {
 						INPUT_VECTORS_OUT_FILE);
 				ObjectInputStream o = new ObjectInputStream(fis);
 				searchVector = (FeatureVector<? extends Number>) o.readObject();
-				inputVectors = (Set<FeatureVector<? extends Number>>) o
+				inputVectors = (NavigableSet<FeatureVector<? extends Number>>) o
 						.readObject();
 				o.close();
 				DIMENSIONS_OF_SIMULATION_VECTORS = searchVector
@@ -345,13 +379,12 @@ public class LSHRunnerImpl implements LSHRunner {
 			}
 			logger.trace("simulation started - finished generation of random feature vectors");
 		}
-
-		List<Pair<Double, Long>> neighbours = LSH
-				.computeLSHandSearchNeighbours(searchVector, inputVectors,
-						SIMILARITY_THRESHOLD, NTHREADS,
+		inputVectors.add(searchVector);
+		NavigableSet<Pair<Double, Long>> neighbours = LSH.searchNeighbours(
+				searchVector, LSH.computeLSH(inputVectors, NTHREADS,
 						CHUNK_SIZE_CLASSIFIER_WORKER,
-						NUMBER_OF_RANDOM_VECTORS_d, NUMBER_OF_PERMUTATIONS_q,
-						WINDOW_SIZE_B);
+						NUMBER_OF_RANDOM_VECTORS_d), SIMILARITY_THRESHOLD,
+				TOP_K, NTHREADS);
 
 		for (Pair<Double, Long> match : neighbours) {
 			logger.info(match.getValue() + " : " + match.getKey());
@@ -377,12 +410,13 @@ public class LSHRunnerImpl implements LSHRunner {
 		logger.trace("%s false positives have been found",
 				falsePositives.size());
 		logger.trace(falsePositives);
-		return neighbours;
+
+		return new ArrayList<Pair<Double, Long>>(neighbours);
 	}
 
-	private Set<FeatureVector<? extends Number>> generateSimulationVectors(
+	private NavigableSet<FeatureVector<? extends Number>> generateSimulationVectors(
 			Integer[] searchVectorValues) {
-		Set<FeatureVector<? extends Number>> inputVectors = new HashSet<FeatureVector<? extends Number>>();
+		NavigableSet<FeatureVector<? extends Number>> inputVectors = new TreeSet<FeatureVector<? extends Number>>();
 		for (int i = 0; i < NUMBER_OF_SIMULATION_VECTORS_CLOSE; i++) {
 			Integer[] closeValueFeatureValues = new Integer[DIMENSIONS_OF_SIMULATION_VECTORS];
 			for (int j = 0; j < DIMENSIONS_OF_SIMULATION_VECTORS; j++) {

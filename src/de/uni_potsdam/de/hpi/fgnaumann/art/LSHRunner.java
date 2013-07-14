@@ -68,6 +68,17 @@ public interface LSHRunner {
 	List<Pair<Double, Long>> runSearch(Long searchVectorId,
 			double SIMILARITY_THRESHOLD, int TOP_K, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B);
+	
+	/**
+	 * 
+	 * @param searchVectorId
+	 * @param SIMILARITY_THRESHOLD
+	 * @param TOP_K
+	 * @param NTHREADS
+	 * @return
+	 */
+	List<Pair<Double, Long>> runSearch(Long searchVectorId,
+			double SIMILARITY_THRESHOLD, int TOP_K, int NTHREADS);
 
 	/**
 	 * 

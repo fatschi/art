@@ -27,18 +27,25 @@ public class RecommendationClient {
 		LSHRunner lshRunner = (LSHRunner) factory.newInstance(LSHRunner.class);
 		FeatureGenerator featureGenerator = (FeatureGenerator) factory
 				.newInstance(FeatureGenerator.class);
-		featureGenerator
-				.runPreprocessing(
-						0.0f,
-						-1,
-						FeatureType.BEST_WORST_N,
-						10,
-						"corpora/bestWorst3CorpusMapVectorWithoutLSH.lsh",
-						"jdbc:postgresql://isfet.hpi.uni-potsdam.de:5432/art2013?user=art2013&password=nVesq3TfTmeqRkP");
-		lshRunner.loadData("corpora/bestWorst3CorpusMapVectorWithoutLSH.lsh");
-		lshRunner.runLSH(32, 1000, 100);
-		lshRunner.storeData("corpora/bestWorst3CorpusMapVectorWithLSH100.lsh");
-		System.out.println(lshRunner.showVector(48413l).getDimensionality());
-		System.out.println(lshRunner.runSearch(48413l, 0.8, 100, 32, 10, 100));
+//		featureGenerator
+//				.runPreprocessing(
+//						0.0f,
+//						-1,
+//						FeatureType.BEST,
+//						10,
+//						"corpora/bestCorpusMapVectorWithoutLSH.lsh",
+//						//"jdbc:sqlite:/home/fabian/art/corpora/news.sqlite");
+//						"jdbc:postgresql://isfet.hpi.uni-potsdam.de:5432/art2013?user=art2013&password=nVesq3TfTmeqRkP");
+//		lshRunner.runLSH(32, 1000, 333);
+//		lshRunner.storeData("corpora/bestCorpusMapVectorWithLSH333.lsh");
+		long searchVector = 112236l;
+		lshRunner.loadData("corpora/bestCorpusMapVectorWithLSH333.lsh");
+		System.out.println(lshRunner.runSearch(searchVector, 0.4, 100, 1));
+		lshRunner.loadData("corpora/bestCorpusMapVectorWithLSH100.lsh");
+		System.out.println(lshRunner.showVector(searchVector).getDimensionality());
+		System.out.println(lshRunner.runSearch(searchVector, 0.4, 100, 1));
+		lshRunner.loadData("corpora/bestWorst10CorpusMapVectorWithLSH100.lsh");
+		System.out.println(lshRunner.showVector(searchVector).getDimensionality());
+		System.out.println(lshRunner.runSearch(searchVector, 0.4, 100, 1));
 	}
 }

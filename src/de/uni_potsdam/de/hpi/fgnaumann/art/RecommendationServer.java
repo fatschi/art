@@ -25,7 +25,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.featureGeneration.FeatureGeneratorImp
  */
 public class RecommendationServer {
 
-	private static int PORT = 8181;
+	private static int PORT = 8282;
 
 	public static void main(String[] args) throws Exception {
 		// create Options object
