@@ -200,7 +200,7 @@ public class AllFeaturesDatabaseExtractor {
 
 	}
 
-	private static long readDocCount(String path) {
+	public static long readDocCount(String path) {
 		long docCount = 0L;
 		try {
 			// use buffering
@@ -225,7 +225,7 @@ public class AllFeaturesDatabaseExtractor {
 		return docCount;
 	}
 
-	private static void writeDocCount(long docCount, String path) {
+	public static void writeDocCount(long docCount, String path) {
 		try {
 			// use buffering
 			OutputStream file = new FileOutputStream(path);
@@ -242,7 +242,7 @@ public class AllFeaturesDatabaseExtractor {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static HashMap<String, Integer> readGlobalPositionMAP(String path) {
+	public static HashMap<String, Integer> readGlobalPositionMAP(String path) {
 		HashMap<String, Integer> wordPositions = null;
 		try {
 			// use buffering
@@ -263,7 +263,7 @@ public class AllFeaturesDatabaseExtractor {
 		return wordPositions;
 	}
 
-	private static void writeGolbalPositionMAP(
+	public static void writeGolbalPositionMAP(
 			HashMap<String, Integer> globalFeaturePositionMap, String path) {
 		try {
 			// use buffering
@@ -286,7 +286,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param path
 	 * @return TermID, and Count
 	 */
-	private static HashMap<Integer, Long> readIDFcounts(String path) {
+	public static HashMap<Integer, Long> readIDFcounts(String path) {
 		HashMap<Integer, Long> recoveredSet = null;
 		try {
 			// use buffering
@@ -314,7 +314,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param path
 	 *            Destination File
 	 */
-	private static void writeIDFcounts(HashMap<Integer, Long> IDFCounts,
+	public static void writeIDFcounts(HashMap<Integer, Long> IDFCounts,
 			String path) {
 		try {
 			// use buffering
@@ -417,7 +417,7 @@ public class AllFeaturesDatabaseExtractor {
 					/ (double) termInNumDocsCounts.get(pos));
 
 			// Update the TF value to the TF IDF value
-			articleFeatureVec.setValue(pos, (double) (TF * IDF));
+			articleFeatureVec.setValue(pos, 1000.d * (double) (TF * IDF));
 		}
 		++docCount; // Update the feature count;
 		return articleFeatureVec;
