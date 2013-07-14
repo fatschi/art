@@ -41,8 +41,15 @@ public interface FeatureGenerator {
 			int featureN, String filePath, String connectionString)
 			throws IOException, ClassNotFoundException, SQLException;
 
-	public void runPreprocessingRead(float addLimit, int limit, FeatureType ftype,
-			int featureN, String filePath, String connectionString)
+	/**
+	 * Method to read already generated LSH features
+	 * @param filePath
+	 * @param connectionString
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws SQLException
+	 */
+	public void runPreprocessingRead(String filePath, String connectionString)
 			throws IOException, ClassNotFoundException, SQLException;
 	
 	

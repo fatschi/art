@@ -22,34 +22,12 @@ public class FeatureGeneratorImpl implements FeatureGenerator {
 	private float addlimit = 0.0f;
 
 	@Override
-	public void runPreprocessingRead(float addLimit, int limit, FeatureType ftype,
-			int featureN, String filePath, String connectionString)
-			throws IOException, ClassNotFoundException, SQLException {
-//		HashSet<String> descriptiveNouns = null; // reset
-//		descriptiveNouns = AllFeaturesDatabaseExtractor.getAllNouns(ftype,
-//				featureN, limit, connectionString); // Get all nouns from the
-//													// corpus
-//		articleFeatureVecs = new TreeSet<FeatureVector<Double>>();
-//		termInNumDocsCounts = new HashMap<Integer, Long>(
-//				descriptiveNouns.size());
-//		globalFeaturePositionMap = new HashMap<String, Integer>(
-//				descriptiveNouns.size(), 1.0f);
-//		nE = new NounExtractor(); // Actual extractor is exchangable
-//		long docCount = AllFeaturesDatabaseExtractor.genFeatureVecs(
-//				descriptiveNouns, limit, articleFeatureVecs,
-//				termInNumDocsCounts, globalFeaturePositionMap, nE,
-//				connectionString);
-//		originalCollectionSize = docCount; // Save this size once
-//		// TFIDF
-//		AllFeaturesDatabaseExtractor.augment2TFIDF(articleFeatureVecs,
-//				termInNumDocsCounts, docCount);
-//		
-//		articleFeatureVecs = AllFeaturesDatabaseExtractor.readFeatures(articleFeatureVecs, filePath);
-//
-//		
-//		AllFeaturesDatabaseExtractor.writeGolbalPositionMAP(globalFeaturePositionMap, "globalFeaturePosition.lsh");
-//		AllFeaturesDatabaseExtractor.writeIDFcounts(termInNumDocsCounts, "IDFtermCounts.lsh");
-//		AllFeaturesDatabaseExtractor.writeDocCount(docCount, "CollectionDoccount.lsh");
+	public void runPreprocessingRead(String filePath, String connectionString)
+			throws IOException, ClassNotFoundException, SQLException {	
+
+		docCount = AllFeaturesDatabaseExtractor.readDocCount("CollectionDoccount.lsh");
+		HashMap<Integer, Long> termInNumDocsCounts = AllFeaturesDatabaseExtractor.readIDFcounts("IDFtermCounts.lsh");
+		HashMap<String, Integer> globalFeaturePositionMap = AllFeaturesDatabaseExtractor.readGlobalPositionMAP("globalFeaturePosition.lsh");
 	}
 
 	@Override
