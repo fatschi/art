@@ -75,6 +75,8 @@ public class AllFeaturesDatabaseExtractor {
 	static final ArticleExtractor FULLTEXT_EXTRACTOR = new ArticleExtractor();
 	static final int LIMIT = 100;
 
+	private static final double TFIDF_MODIFIER = 1000d;
+
 	/**
 	 * 
 	 * @author Nils Rethmeier
@@ -417,7 +419,7 @@ public class AllFeaturesDatabaseExtractor {
 					/ (double) termInNumDocsCounts.get(pos));
 
 			// Update the TF value to the TF IDF value
-			articleFeatureVec.setValue(pos, (double) (TF * IDF));
+			articleFeatureVec.setValue(pos, TFIDF_MODIFIER * (double) (TF * IDF));
 		}
 		++docCount; // Update the feature count;
 		return articleFeatureVec;

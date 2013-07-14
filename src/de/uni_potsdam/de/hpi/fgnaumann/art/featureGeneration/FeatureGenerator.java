@@ -41,11 +41,6 @@ public interface FeatureGenerator {
 			int featureN, String filePath, String connectionString)
 			throws IOException, ClassNotFoundException, SQLException;
 
-	public void runPreprocessingRead(float addLimit, int limit, FeatureType ftype,
-			int featureN, String filePath, String connectionString)
-			throws IOException, ClassNotFoundException, SQLException;
-	
-	
 	/**
 	 * Method to add a new article to the feature collection. <b>Note:<b> Corpus
 	 * noun counts and document statistics are updated when using this method.
