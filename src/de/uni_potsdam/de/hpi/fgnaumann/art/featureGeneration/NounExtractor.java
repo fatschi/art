@@ -156,32 +156,6 @@ public class NounExtractor {
 		return null;
 	}
 
-	/**
-	 * Test function to test the fultext extractor
-	 * 
-	 * @throws FileNotFoundException
-	 * @throws UnsupportedEncodingException
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unused")
-	private static void fulltextTest() throws FileNotFoundException,
-			UnsupportedEncodingException, IOException {
-		// Fulltext Test
-		BufferedReader br = makeReader("TestDocs/fulltextTest2.html");
-		String line = null;
-		StringBuffer paragraph = new StringBuffer();
-		try {
-			while ((line = br.readLine()) != null) {
-				paragraph.append(line);
-				paragraph.append('\n');
-			}
-			String para = paragraph.toString().replaceAll("''", "'");
-			logger.trace(FULLTEXT_EXTRACTOR.getText(para));
-		} catch (Exception e) {
-		} finally {
-			br.close();
-		}
-	}
 
 	/**
 	 * Method to create a noun (1-gram) corpus. Uses line buffering to speed up
