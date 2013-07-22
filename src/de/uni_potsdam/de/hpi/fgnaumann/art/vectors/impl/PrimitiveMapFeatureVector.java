@@ -1,6 +1,8 @@
 package de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl;
 
 import it.unimi.dsi.fastutil.ints.Int2DoubleAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
+import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,11 +25,12 @@ public class PrimitiveMapFeatureVector<T extends Number> extends AbstractFeature
 		FeatureVector<T> {
 
 	private static final long serialVersionUID = -514366940793968554L;
-	private Int2DoubleAVLTreeMap featuresMap;
+	private Int2DoubleMap featuresMap;
 
 	@SafeVarargs
 	public PrimitiveMapFeatureVector(Long id, Integer dimensionality) {
 		this.dimensionality = dimensionality;
+		//featuresMap = new Int2DoubleOpenHashMap();
 		featuresMap = new Int2DoubleAVLTreeMap();
 		featuresMap.defaultReturnValue(0);
 		this.id = id;
@@ -104,6 +107,7 @@ public class PrimitiveMapFeatureVector<T extends Number> extends AbstractFeature
 	 */
 	private boolean classify(FeatureVector<? extends Number> wd) {
 		float sum = 0;
+		//TODO om
 		// Scalar Product
 		for (int i = 0; i != this.getDimensionality(); ++i) {
 			// TODO check the type of the vector

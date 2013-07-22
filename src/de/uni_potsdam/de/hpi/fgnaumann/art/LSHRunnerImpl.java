@@ -66,10 +66,10 @@ public class LSHRunnerImpl implements LSHRunner {
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
 	// simulation parameters
-	private static int NUMBER_OF_SIMULATION_VECTORS = 100;
+	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
-	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 10000;
-	private static int SPARSITY = 10;
+	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 3333;
+	private static int SPARSITY = 100;
 	private static int SIMULATION_VECTOR_VALUE_SPACE = 100;
 	private static double VARIANCE_OF_SIMULATION_VECTORS_CLOSE = 0.15;
 

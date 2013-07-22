@@ -65,6 +65,7 @@ public interface LSHRunner {
 	 * @param WINDOW_SIZE_B
 	 * @return
 	 */
+	@Deprecated
 	List<Pair<Double, Long>> runSearch(Long searchVectorId,
 			double SIMILARITY_THRESHOLD, int TOP_K, int NTHREADS,
 			int NUMBER_OF_PERMUTATIONS_q, int WINDOW_SIZE_B);
