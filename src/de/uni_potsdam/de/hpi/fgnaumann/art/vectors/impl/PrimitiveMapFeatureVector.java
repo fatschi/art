@@ -30,8 +30,7 @@ public class PrimitiveMapFeatureVector<T extends Number> extends AbstractFeature
 	@SafeVarargs
 	public PrimitiveMapFeatureVector(Long id, Integer dimensionality) {
 		this.dimensionality = dimensionality;
-		//featuresMap = new Int2DoubleOpenHashMap();
-		featuresMap = new Int2DoubleAVLTreeMap();
+		featuresMap = new Int2DoubleOpenHashMap();
 		featuresMap.defaultReturnValue(0);
 		this.id = id;
 	}

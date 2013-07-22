@@ -45,6 +45,7 @@ import de.uni_potsdam.de.hpi.fgnaumann.art.vectors.impl.PrimitiveMapFeatureVecto
  */
 public class LSHRunnerImpl implements LSHRunner {
 
+	//change this line to change the global vector implementaion class
 	public static final Class<?> vectorImplementationClass = PrimitiveMapFeatureVector.class;
 	// public static final Class<?> vectorImplementationClass =
 	// NumberArrayFeatureVector.class;
@@ -65,7 +66,7 @@ public class LSHRunnerImpl implements LSHRunner {
 	private static int NTHREADS = CORES;
 	private static int CHUNK_SIZE_CLASSIFIER_WORKER = 100;
 
-	// simulation parameters
+	// simulation benchmark parameters
 	private static int NUMBER_OF_SIMULATION_VECTORS = 1000;
 	private static int NUMBER_OF_SIMULATION_VECTORS_CLOSE = 5;
 	private static int DIMENSIONS_OF_SIMULATION_VECTORS = 3333;

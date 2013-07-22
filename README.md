@@ -1,86 +1,18 @@
-art
-===
+README:
 
-random projection implementation
+1. import the project into eclipse
+2. see the RecommendationClient.java for an example client program
+2. adapt the ant build.xml accordingly to your ssh settings
+3. run ant
+4. start the server process with ./run.sh --server on the desired machine
 
+NOTE:
 
+you can find precomputed files with feature vectors, wheter with or without computed LSH hashes in our team folder on isfet:
++home/art03/corpora/final
 
+[all|bestWorstX|best]CorpusMapVector[WithLSHXXX|WithoutLSH].lsh
 
-
-
-
-
-
-
-QTAG POS TAGS
-
-Here is a copy of the POS tagset for Qtag (English) for your reference:
-
-??? no tag assigned
-" simple double quote
-# pound sign
-$ dollar sign
-' right single quote
-` left single quote
-( left parenthesis (round, square, curly or angle)
-) right parenthesis (round, square, curly or angle)
-, comma
-. sentence-final punctuation
-: mid-sentence punctuation
-BE be
-BED were
-BEDZ was
-BEG being
-BEM am
-BEN been
-BER are
-BEZ is
-CC coordinating conjunction
-CD cardinal number
-DO do
-DOD did
-DOG doing
-DON done
-DOZ does
-DT determiner
-EX existential `there'
-FW foreign word
-HV have
-HVD had (past tense)
-HVG having
-HVN had (past participle)
-HVZ has
-IN preposition or subordinating conjunction
-JJ adjective
-JJR adjective, comparative
-JJS adjective, superlative
-LS list item marker
-MD modal
-NN noun, singular or mass
-NNS noun, plural
-NP proper noun, singular
-NPS proper noun, plural
-PDT predeterminer
-POS possessive ending
-PP personal pronoun
-PP$ possessive pronoun
-RB adverb
-RBR adverb, comparative
-RBS adverb, superlative
-RP particle
-SYM symbol
-TO infinitive marker `to'
-UH interjection
-VB verb, base form
-VBD verb, past tense
-VBG verb, gerund or present participle
-VBN verb, past participle
-VBP verb, non-3rd person singular present
-VBZ verb, 3rd person singular present
-WDT wh-determiner
-WP wh-pronoun
-WP$ possessive wh-pronoun
-WRB wh-adverb
-XNOT not and n't
-
-
+name schema:
+[all|bestWorstX|best] - chosen features, "all" takes all nouns from the corpus as dimensions, "bestWorstX" takes the most and least occuring X nouns from each document, "best" takes only the most occuring word from each document
+[WithLSHXXX|WithoutLSH] - indicates if the LSH hash is written to the serialized FeatureVector objects. XXX is the number of bits used for the hash

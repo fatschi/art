@@ -798,6 +798,7 @@ public class AllFeaturesDatabaseExtractor {
 	 * @param nE
 	 * @return NONE. SET IS MODIFIED DIRECTLY.
 	 */
+	@SuppressWarnings("unused")
 	private static void getNeededNounSet(HashSet<String> collectionMap,
 			String fulltext, NounExtractor nE) {
 		// Extract nouns
